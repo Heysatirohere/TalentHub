@@ -16,11 +16,13 @@ import {
   GraduationCap,
   Sparkles,
   Mail,
-  ChevronRight
+  ChevronRight,
+  BookOpen
 } from "lucide-react";
 import { useTalent } from "@/context/TalentContext";
 import { rankAlunosParaVaga } from "@/lib/match";
-import { MatchResult, SOFT_SKILLS_LABELS, HARD_SKILLS_LABELS } from "@/types/talent";
+import { MatchResult, SOFT_SKILLS_LABELS, Aluno } from "@/types/talent";
+import { ChatDrawer } from "@/components/ChatDrawer";
 
 export default function RecruiterDashboardPage() {
   const { alunos, vagas } = useTalent();
@@ -30,6 +32,7 @@ export default function RecruiterDashboardPage() {
   
   // Modal de Detalhes do Aluno
   const [selectedMatch, setSelectedMatch] = useState<MatchResult | null>(null);
+  const [chatAluno, setChatAluno] = useState<Aluno | null>(null);
 
   // Filtros
   const [searchQuery, setSearchQuery] = useState("");
@@ -172,13 +175,13 @@ export default function RecruiterDashboardPage() {
 
               <div className="pt-2 border-t border-slate-800">
                 <span className="text-[11px] font-semibold text-teal-400 block mb-1">
-                  Pesos de Hard Skills (0 a 5):
+                  Matérias Requeridas do Histórico:
                 </span>
-                <div className="grid grid-cols-2 gap-1 text-[11px] text-slate-300">
-                  {Object.entries(currentVaga.pesosHardSkills).map(([cat, peso]) => (
-                    <div key={cat} className="flex justify-between px-2 py-1 bg-slate-950 rounded">
-                      <span className="capitalize">{cat}:</span>
-                      <span className="font-bold text-teal-400">Peso {peso}</span>
+                <div className="space-y-1 text-[11px] text-slate-300">
+                  {currentVaga.materiasRequeridas?.map((item, idx) => (
+                    <div key={idx} className="flex justify-between px-2 py-1 bg-slate-950 rounded">
+                      <span className="truncate pr-2">{item.nomeDaMateria}:</span>
+                      <span className="font-bold text-teal-400">Peso {item.peso}x</span>
                     </div>
                   ))}
                 </div>
@@ -346,7 +349,7 @@ export default function RecruiterDashboardPage() {
                           <span>{scoreFinal}% Match</span>
                         </div>
                         <p className="text-[10px] text-slate-500 mt-0.5">
-                          Hard: {match.hardSkillScore}% | Soft: {match.softSkillScore}%
+                          Histórico: {match.historicoScore}% | Soft: {match.softSkillScore}%
                         </p>
                       </div>
 
@@ -409,7 +412,7 @@ export default function RecruiterDashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {(Object.keys(SOFT_SKILLS_LABELS) as (keyof typeof SOFT_SKILLS_LABELS)[]).map((key) => {
                   const isRequired = currentVaga.requisitosSoftSkills.includes(key);
-                  const hasSkill = selectedMatch.aluno.softSkills[key];
+                  const hasSkill = Boolean(selectedMatch.aluno.softSkills?.[key] || selectedMatch.aluno.progressosTrilha?.some(p => p.trilhaNome.toLowerCase() === key.toLowerCase() && p.status !== "EM_TRILHA"));
 
                   return (
                     <div
@@ -441,33 +444,41 @@ export default function RecruiterDashboardPage() {
               </div>
             </div>
 
-            {/* Hard Skills Progress Bars */}
+            {/* Histórico Acadêmico Validado */}
             <div className="space-y-3">
               <h3 className="text-xs font-bold text-teal-400 uppercase tracking-wider flex items-center space-x-2">
-                <Award className="w-4 h-4 text-teal-400" />
-                <span>Notas de Hard Skills por Categoria</span>
+                <BookOpen className="w-4 h-4 text-teal-400" />
+                <span>Boletim do Histórico Escolar (Notas Validadas FECAP)</span>
               </h3>
-
-              <div className="space-y-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
-                {Object.entries(selectedMatch.aluno.hardSkills).map(([cat, score]) => {
-                  const pesoVaga = currentVaga.pesosHardSkills[cat as keyof typeof currentVaga.pesosHardSkills] || 0;
-                  return (
-                    <div key={cat} className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="font-semibold text-slate-300">{HARD_SKILLS_LABELS[cat as keyof typeof HARD_SKILLS_LABELS]}:</span>
-                        <span className="text-slate-400">
-                          Nota: <strong className="text-white">{score}/100</strong> (Peso na Vaga: <strong className="text-teal-400">{pesoVaga}x</strong>)
-                        </span>
-                      </div>
-                      <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
-                        <div
-                          className="bg-gradient-to-r from-teal-500 to-emerald-400 h-full rounded-full transition-all duration-500"
-                          style={{ width: `${score}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-900 text-slate-400 font-semibold uppercase text-[10px] border-b border-slate-800">
+                    <tr>
+                      <th className="p-3">Matéria / Disciplina</th>
+                      <th className="p-3">Semestre</th>
+                      <th className="p-3 text-center">Nota (0 a 10)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                    {selectedMatch.aluno.historicoAcademico?.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-slate-900/50">
+                        <td className="p-3 font-semibold text-white">{item.materia}</td>
+                        <td className="p-3 font-mono text-slate-400">{item.semestre}</td>
+                        <td className="p-3 text-center">
+                          <span className={`inline-block font-mono font-bold px-2 py-0.5 rounded ${
+                            item.nota >= 8.5
+                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                              : item.nota >= 7.0
+                              ? "bg-blue-500/20 text-blue-300 border border-blue-500/40"
+                              : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                          }`}>
+                            {item.nota.toFixed(1)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -499,18 +510,26 @@ export default function RecruiterDashboardPage() {
 
               <button
                 onClick={() => {
-                  alert(`Convite de entrevista enviado com sucesso para ${selectedMatch.aluno.email}!`);
+                  const target = selectedMatch.aluno;
+                  setSelectedMatch(null);
+                  setChatAluno(target);
                 }}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold text-xs flex items-center space-x-2 shadow-lg shadow-teal-500/20"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-bold text-xs flex items-center space-x-2 shadow-lg shadow-cyan-500/20"
               >
-                <Mail className="w-4 h-4 text-slate-950" />
-                <span>Convidar para Entrevista</span>
+                <MessageSquare className="w-4 h-4 text-slate-950" />
+                <span>Enviar Mensagem ao Candidato</span>
               </button>
             </div>
 
           </div>
         </div>
       )}
+
+      {/* CHAT DRAWER LATERAL */}
+      <ChatDrawer
+        aluno={chatAluno}
+        onClose={() => setChatAluno(null)}
+      />
 
     </main>
   );

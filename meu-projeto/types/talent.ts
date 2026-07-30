@@ -1,3 +1,21 @@
+export type StatusSoftSkill = "EM_TRILHA" | "TESTE_APROVADO" | "VALIDADO_MENTORIA";
+
+export interface ITrilhaSoftSkill {
+  id: string;
+  nome: string;
+  descricao: string;
+}
+
+export interface IProgressoTrilha {
+  id?: string;
+  alunoId?: string;
+  trilhaId?: string;
+  trilhaNome: string;
+  status: StatusSoftSkill;
+  dataConclusao?: string | null;
+  feedback?: string | null;
+}
+
 export interface ISoftSkills {
   comunicacao: boolean;
   trabalhoEmEquipe: boolean;
@@ -7,12 +25,15 @@ export interface ISoftSkills {
   pensamentoCritico: boolean;
 }
 
-export interface IHardSkills {
-  tecnologia: number;  // 0 a 100
-  humanas: number;     // 0 a 100
-  negocios: number;    // 0 a 100
-  exatas: number;      // 0 a 100
-  design: number;      // 0 a 100
+export interface IItemHistorico {
+  materia: string;
+  nota: number; // 0.0 a 10.0
+  semestre: string; // ex: "2024.1", "5º Semestre"
+}
+
+export interface IMateriaRequerida {
+  nomeDaMateria: string;
+  peso: number; // 1 a 5
 }
 
 export interface IExperiencia {
@@ -35,6 +56,7 @@ export interface IDocumentoSimulado {
 
 export interface IAluno {
   id: string;
+  userId?: string;
   ra: string;           // Registro Acadêmico FECAP (ex: "26028671")
   nome: string;
   email: string;
@@ -43,20 +65,13 @@ export interface IAluno {
   idade: number;
   avatarUrl: string;
   feedbacksProfessores: string[];
-  softSkills: ISoftSkills;
-  hardSkills: IHardSkills;
+  softSkills?: ISoftSkills;
+  progressosTrilha?: IProgressoTrilha[];
+  historicoAcademico: IItemHistorico[];
   experiencias: IExperiencia[];
   packDocumentos: IDocumentoSimulado[];
   createdAt?: string;
   updatedAt?: string;
-}
-
-export interface IPesosHardSkills {
-  tecnologia: number; // 0 a 5
-  humanas: number;    // 0 a 5
-  negocios: number;   // 0 a 5
-  exatas: number;     // 0 a 5
-  design: number;     // 0 a 5
 }
 
 export type StatusCampanha = "pendente_aprovacao" | "aprovada" | "rejeitada";
@@ -69,7 +84,7 @@ export interface IVaga {
   tipoContrato: string;
   descricao: string;
   requisitosSoftSkills: (keyof ISoftSkills)[];
-  pesosHardSkills: IPesosHardSkills;
+  materiasRequeridas: IMateriaRequerida[];
   status: StatusCampanha;
   dataCriacao: string;
   feedbackMaster?: string;
@@ -80,20 +95,20 @@ export interface IVaga {
 export interface IMatchResult {
   aluno: IAluno;
   scoreFinal: number; // 0 a 100
-  hardSkillScore: number;
+  historicoScore: number; // Média ponderada do histórico (0 a 100)
   softSkillScore: number;
   softSkillsAtendidasCount: number;
   softSkillsFaltantes: (keyof ISoftSkills)[];
   passouSoftSkills: boolean;
 }
 
-// Aliases para compatibilidade de código legado
+// Aliases para compatibilidade
 export type SoftSkills = ISoftSkills;
-export type HardSkills = IHardSkills;
+export type ItemHistorico = IItemHistorico;
+export type MateriaRequerida = IMateriaRequerida;
 export type Experiencia = IExperiencia;
 export type DocumentoSimulado = IDocumentoSimulado;
 export type Aluno = IAluno;
-export type PesosHardSkills = IPesosHardSkills;
 export type Vaga = IVaga;
 export type MatchResult = IMatchResult;
 
@@ -104,12 +119,4 @@ export const SOFT_SKILLS_LABELS: Record<keyof ISoftSkills, string> = {
   resolucaoProblemas: "Resolução de Problemas",
   adaptabilidade: "Adaptabilidade",
   pensamentoCritico: "Pensamento Crítico",
-};
-
-export const HARD_SKILLS_LABELS: Record<keyof IHardSkills, string> = {
-  tecnologia: "Tecnologia & Programação",
-  humanas: "Humanas & Comunicação",
-  negocios: "Gestão & Negócios",
-  exatas: "Exatas & Análise de Dados",
-  design: "Design & UX/UI",
 };

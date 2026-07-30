@@ -8,13 +8,13 @@ import {
   IExperiencia, 
   IDocumentoSimulado, 
   ISoftSkills, 
-  IHardSkills, 
+  IItemHistorico, 
   IMatchResult 
 } from "@/types/talent";
 import { 
   getAlunos, 
   createAluno, 
-  updateAlunoSkills, 
+  updateAlunoHistorico as updateAlunoHistoricoService, 
   addExperienciaAluno as addExpService, 
   addDocumentoAluno as addDocService, 
   resetAlunos 
@@ -40,7 +40,7 @@ interface TalentContextType {
   setCurrentAlunoId: (id: string) => void;
   loginAs: (role: UserRole, alunoIdOrRa?: string) => void;
   adicionarAluno: (aluno: Omit<IAluno, "id" | "avatarUrl" | "experiencias" | "packDocumentos">) => Promise<IAluno>;
-  atualizarHabilidadesAluno: (alunoId: string, softSkills: ISoftSkills, hardSkills: IHardSkills) => Promise<IAluno>;
+  atualizarHistoricoAluno: (alunoId: string, softSkills: ISoftSkills, historicoAcademico: IItemHistorico[]) => Promise<IAluno>;
   adicionarCampanha: (vaga: Omit<IVaga, "id" | "status" | "dataCriacao">) => Promise<IVaga>;
   alterarStatusCampanha: (vagaId: string, status: StatusCampanha, feedback?: string) => Promise<IVaga>;
   adicionarExperienciaAluno: (alunoId: string, exp: Omit<IExperiencia, "id">) => Promise<IExperiencia>;
@@ -51,7 +51,7 @@ interface TalentContextType {
 
 const TalentContext = createContext<TalentContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY_ROLE = "fecap_talent_role_v4";
+const LOCAL_STORAGE_KEY_ROLE = "fecap_talent_role_v5";
 
 export function TalentProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRole] = useState<UserRole>(() => {
@@ -71,9 +71,8 @@ export function TalentProvider({ children }: { children: React.ReactNode }) {
   const [alunos, setAlunos] = useState<IAluno[]>([]);
   const [vagas, setVagas] = useState<IVaga[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [currentAlunoId, setCurrentAlunoId] = useState<string>("aluno-1");
+  const [currentAlunoId, setCurrentAlunoId] = useState<string>("26010001");
 
-  // Carregar dados iniciais dos serviços assíncronos
   useEffect(() => {
     let isMounted = true;
 
@@ -107,14 +106,25 @@ export function TalentProvider({ children }: { children: React.ReactNode }) {
     }
   }, [userRole]);
 
-  const currentAluno = alunos.find((a) => a.id === currentAlunoId || a.ra === currentAlunoId) || alunos[0];
+  const currentAluno =
+    alunos.find(
+      (a) =>
+        a.ra === currentAlunoId ||
+        a.email === currentAlunoId ||
+        a.id === currentAlunoId
+    ) || alunos[0];
 
   const loginAs = (role: UserRole, alunoIdOrRa?: string) => {
     setUserRole(role);
-    if (role === "aluno" && alunoIdOrRa) {
-      const alunoAchado = alunos.find((a) => a.ra === alunoIdOrRa || a.id === alunoIdOrRa);
+    if (role === "aluno") {
+      const searchKey = alunoIdOrRa || "26010001";
+      const alunoAchado = alunos.find(
+        (a) => a.ra === searchKey || a.id === searchKey || a.email === searchKey
+      );
       if (alunoAchado) {
-        setCurrentAlunoId(alunoAchado.id);
+        setCurrentAlunoId(alunoAchado.ra || alunoAchado.id);
+      } else {
+        setCurrentAlunoId(searchKey);
       }
     }
   };
@@ -129,12 +139,12 @@ export function TalentProvider({ children }: { children: React.ReactNode }) {
     return novoAluno;
   };
 
-  const atualizarHabilidadesAluno = async (
+  const atualizarHistoricoAluno = async (
     alunoId: string,
     softSkills: ISoftSkills,
-    hardSkills: IHardSkills
+    historicoAcademico: IItemHistorico[]
   ): Promise<IAluno> => {
-    const alunoAtualizado = await updateAlunoSkills(alunoId, softSkills, hardSkills);
+    const alunoAtualizado = await updateAlunoHistoricoService(alunoId, softSkills, historicoAcademico);
     setAlunos((prev) => prev.map((a) => (a.id === alunoId || a.ra === alunoId ? alunoAtualizado : a)));
     return alunoAtualizado;
   };
@@ -203,7 +213,7 @@ export function TalentProvider({ children }: { children: React.ReactNode }) {
         setCurrentAlunoId,
         loginAs,
         adicionarAluno,
-        atualizarHabilidadesAluno,
+        atualizarHistoricoAluno,
         adicionarCampanha,
         alterarStatusCampanha,
         adicionarExperienciaAluno,

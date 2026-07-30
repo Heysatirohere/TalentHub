@@ -1,23 +1,38 @@
-import { IAluno, IVaga, IMatchResult, ISoftSkills, IHardSkills } from "@/types/talent";
+import { IAluno, IVaga, IMatchResult, ISoftSkills } from "@/types/talent";
 import { getAlunos } from "./alunoService";
 import { getVagaById } from "./vagaService";
 
 const simulateNetworkDelay = () => new Promise((resolve) => setTimeout(resolve, 200));
 
 /**
- * Lógica isolada do Algoritmo de Match entre Aluno e Vaga.
+ * Lógica do Algoritmo de Match entre Aluno e Vaga.
  *
- * 1. Soft Skills: Validação rigorosa dos requisitos obrigatórios da vaga.
- *    Caso o aluno não atenda a alguma soft skill, sofre penalização drástica (ex: ~60%).
- * 2. Hard Skills: Média Ponderada entre nota do aluno (0-100) e peso exigido pela vaga (0-5).
+ * 1. Soft Skills: Validação dos requisitos comportamentais obrigatórios.
+ * 2. Histórico Acadêmico: Média Ponderada cruzando as matérias exigidas pela vaga com as notas reais (0-10) do aluno.
+ *    Exemplo: Vaga pede Cybersecurity (peso 3). Aluno tirou 8.0 -> contribuição: (8.0 * 10) * 3 = 240.
  */
 export function calculateMatchScore(aluno: IAluno, vaga: IVaga): IMatchResult {
   const reqSofts = vaga.requisitosSoftSkills || [];
   const softsFaltantes: (keyof ISoftSkills)[] = [];
   let softsAtendidas = 0;
+  let mentoriaValidadaCount = 0;
 
   for (const softKey of reqSofts) {
-    if (aluno.softSkills && aluno.softSkills[softKey]) {
+    const keyStr = String(softKey).toLowerCase();
+    const progresso = aluno.progressosTrilha?.find(
+      (p) => p.trilhaNome.toLowerCase() === keyStr || p.trilhaId?.toLowerCase() === keyStr
+    );
+
+    if (progresso) {
+      if (progresso.status === "VALIDADO_MENTORIA") {
+        softsAtendidas++;
+        mentoriaValidadaCount++;
+      } else if (progresso.status === "TESTE_APROVADO") {
+        softsAtendidas++;
+      } else {
+        softsFaltantes.push(softKey);
+      }
+    } else if (aluno.softSkills && aluno.softSkills[softKey]) {
       softsAtendidas++;
     } else {
       softsFaltantes.push(softKey);
@@ -27,34 +42,47 @@ export function calculateMatchScore(aluno: IAluno, vaga: IVaga): IMatchResult {
   const passouSoftSkills = softsFaltantes.length === 0;
   const softRatio = reqSofts.length > 0 ? softsAtendidas / reqSofts.length : 1;
 
-  // Cálculo da Média Ponderada de Hard Skills
+  // Média Ponderada das Matérias Requeridas
   let somaPonderada = 0;
   let somaPesos = 0;
 
-  const categorias: (keyof IHardSkills)[] = ["tecnologia", "humanas", "negocios", "exatas", "design"];
+  const materiasReq = vaga.materiasRequeridas || [];
 
-  for (const cat of categorias) {
-    const peso = vaga.pesosHardSkills[cat] || 0;
-    const notaAluno = aluno.hardSkills[cat] || 0;
+  for (const req of materiasReq) {
+    const peso = req.peso || 1;
+    const reqNomeNorm = req.nomeDaMateria.toLowerCase().trim();
 
-    somaPonderada += notaAluno * peso;
+    // Busca no histórico do aluno por correspondência de nome
+    const itemHistorico = aluno.historicoAcademico?.find(
+      (h) => h.materia.toLowerCase().trim() === reqNomeNorm || h.materia.toLowerCase().includes(reqNomeNorm) || reqNomeNorm.includes(h.materia.toLowerCase())
+    );
+
+    const nota = itemHistorico ? itemHistorico.nota : 0; // 0.0 a 10.0
+    const notaEmEscala100 = nota * 10;
+
+    somaPonderada += notaEmEscala100 * peso;
     somaPesos += peso;
   }
 
-  const hardSkillScore = somaPesos > 0 ? Math.round(somaPonderada / somaPesos) : 0;
+  const historicoScore = somaPesos > 0 ? Math.round(somaPonderada / somaPesos) : 0;
   const softSkillScore = Math.round(softRatio * 100);
 
-  // Score Final com Penalização de Corte
-  let scoreFinal = hardSkillScore;
+  // Multiplicador (Peso extra) por chancela de mentoria validada pela coordenação (Hub Master)
+  const multiplicadorMentoria = 1 + (mentoriaValidadaCount * 0.15);
+
+  // Score Final com Penalização por Soft Skills faltantes ou Multiplicador de Mentoria
+  let scoreFinal = historicoScore;
   if (!passouSoftSkills) {
     const fatorPenalizacao = 0.35 + 0.25 * softRatio;
-    scoreFinal = Math.round(hardSkillScore * fatorPenalizacao);
+    scoreFinal = Math.round(historicoScore * fatorPenalizacao * multiplicadorMentoria);
+  } else {
+    scoreFinal = Math.round(historicoScore * multiplicadorMentoria);
   }
 
   return {
     aluno,
     scoreFinal: Math.max(0, Math.min(100, scoreFinal)),
-    hardSkillScore,
+    historicoScore,
     softSkillScore,
     softSkillsAtendidasCount: softsAtendidas,
     softSkillsFaltantes: softsFaltantes,
@@ -63,7 +91,7 @@ export function calculateMatchScore(aluno: IAluno, vaga: IVaga): IMatchResult {
 }
 
 /**
- * Função de serviço assíncrona que executa o algoritmo de match e ranqueia os alunos para uma vaga.
+ * Função de serviço assíncrona para ranqueamento de candidatos por vaga.
  */
 export async function getAlunosRanqueadosPorVaga(vagaId: string): Promise<IMatchResult[]> {
   await simulateNetworkDelay();
@@ -82,11 +110,11 @@ export interface IFiltrosBuscaAtiva {
   searchQuery?: string;
   curso?: string;
   requiredSoftSkills?: Record<keyof ISoftSkills, boolean>;
-  minHardSkills?: Partial<IHardSkills>;
+  minNotaMateria?: number;
 }
 
 /**
- * Função de serviço assíncrona para Busca Ativa (Banco Livre de Talentos).
+ * Busca Ativa de Talentos por filtros proativos.
  */
 export async function searchTalentosProativo(filtros: IFiltrosBuscaAtiva): Promise<IAluno[]> {
   await simulateNetworkDelay();
@@ -100,7 +128,8 @@ export async function searchTalentosProativo(filtros: IFiltrosBuscaAtiva): Promi
       const matchRa = aluno.ra.toLowerCase().includes(q);
       const matchEmail = aluno.email.toLowerCase().includes(q);
       const matchCurso = aluno.curso.toLowerCase().includes(q);
-      if (!matchName && !matchRa && !matchEmail && !matchCurso) return false;
+      const matchMateria = aluno.historicoAcademico?.some((h) => h.materia.toLowerCase().includes(q));
+      if (!matchName && !matchRa && !matchEmail && !matchCurso && !matchMateria) return false;
     }
 
     // 2. Curso
@@ -114,19 +143,23 @@ export async function searchTalentosProativo(filtros: IFiltrosBuscaAtiva): Promi
         (k) => filtros.requiredSoftSkills![k]
       );
       for (const k of reqKeys) {
-        if (!aluno.softSkills[k]) return false;
+        const kStr = String(k).toLowerCase();
+        const progresso = aluno.progressosTrilha?.find(
+          (p) => p.trilhaNome.toLowerCase() === kStr || p.trilhaId?.toLowerCase() === kStr
+        );
+        const atendeu = progresso
+          ? progresso.status === "TESTE_APROVADO" || progresso.status === "VALIDADO_MENTORIA"
+          : !!aluno.softSkills?.[k];
+        if (!atendeu) return false;
       }
     }
 
-    // 4. Notas mínimas de Hard Skills
-    if (filtros.minHardSkills) {
-      const hardKeys = Object.keys(filtros.minHardSkills) as (keyof IHardSkills)[];
-      for (const k of hardKeys) {
-        const minVal = filtros.minHardSkills[k] || 0;
-        if (minVal > 0 && (aluno.hardSkills[k] || 0) < minVal) {
-          return false;
-        }
-      }
+    // 4. Nota mínima geral no histórico
+    if (filtros.minNotaMateria && filtros.minNotaMateria > 0) {
+      const mediaAluno = aluno.historicoAcademico && aluno.historicoAcademico.length > 0
+        ? aluno.historicoAcademico.reduce((acc, h) => acc + h.nota, 0) / aluno.historicoAcademico.length
+        : 0;
+      if (mediaAluno < filtros.minNotaMateria) return false;
     }
 
     return true;

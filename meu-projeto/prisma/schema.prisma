@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ALUNO
+  EMPRESA
+  MASTER
+}
+
+enum StatusCampanha {
+  PENDENTE_APROVACAO
+  APROVADA
+  REJEITADA
+}
+
+enum StatusSoftSkill {
+  EM_TRILHA
+  TESTE_APROVADO
+  VALIDADO_MENTORIA
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  senha     String   @default("")
+  role      Role     @default(ALUNO)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  aluno              Aluno?
+  empresa            Empresa?
+  mensagensEnviadas  Mensagem[] @relation("MensagensEnviadas")
+  mensagensRecebidas Mensagem[] @relation("MensagensRecebidas")
+
+  @@map("users")
+}
+
+model Mensagem {
+  id             String   @id @default(uuid())
+  remetenteId    String
+  remetente      User     @relation("MensagensEnviadas", fields: [remetenteId], references: [id], onDelete: Cascade)
+  destinatarioId String
+  destinatario   User     @relation("MensagensRecebidas", fields: [destinatarioId], references: [id], onDelete: Cascade)
+  conteudo       String
+  lida           Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@map("mensagens")
+}
+
+model Aluno {
+  id                   String   @id @default(uuid())
+  userId               String?  @unique
+  user                 User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ra                   String   @unique
+  nome                 String
+  email                String   @unique
+  curso                String
+  semestre             Int
+  idade                Int
+  avatarUrl            String
+  feedbacksProfessores String[] @default([])
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  historicoAcademico HistoricoAcademico[]
+  experiencias       Experiencia[]
+  packDocumentos     DocumentoSimulado[]
+  progressosTrilha   ProgressoAlunoTrilha[]
+
+  @@map("alunos")
+}
+
+model TrilhaSoftSkill {
+  id        String   @id @default(uuid())
+  nome      String   @unique
+  descricao String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  progressos ProgressoAlunoTrilha[]
+
+  @@map("trilhas_soft_skill")
+}
+
+model ProgressoAlunoTrilha {
+  id            String          @id @default(uuid())
+  alunoId       String
+  aluno         Aluno           @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  trilhaId      String
+  trilha        TrilhaSoftSkill @relation(fields: [trilhaId], references: [id], onDelete: Cascade)
+  status        StatusSoftSkill @default(EM_TRILHA)
+  dataConclusao DateTime?
+  feedback      String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@unique([alunoId, trilhaId])
+  @@map("progresso_aluno_trilha")
+}
+
+model HistoricoAcademico {
+  id        String   @id @default(uuid())
+  alunoId   String
+  aluno     Aluno    @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  materia   String
+  nota      Float
+  semestre  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("historico_academico")
+}
+
+model Empresa {
+  id          String   @id @default(uuid())
+  userId      String?  @unique
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nomeEmpresa String
+  cnpj        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  vagas Vaga[]
+
+  @@map("empresas")
+}
+
+model Vaga {
+  id                   String         @id @default(uuid())
+  empresaId            String?
+  empresaRef           Empresa?       @relation(fields: [empresaId], references: [id], onDelete: SetNull)
+  titulo               String
+  empresa              String
+  localizacao          String
+  tipoContrato         String
+  descricao            String
+  requisitosSoftSkills String[]       @default([])
+  status               StatusCampanha @default(PENDENTE_APROVACAO)
+  dataCriacao          String
+  feedbackMaster       String?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  materiasRequeridas MateriaRequerida[]
+
+  @@map("vagas")
+}
+
+model MateriaRequerida {
+  id            String   @id @default(uuid())
+  vagaId        String
+  vaga          Vaga     @relation(fields: [vagaId], references: [id], onDelete: Cascade)
+  nomeDaMateria String
+  peso          Int      @default(1)
+  createdAt     DateTime @default(now())
+
+  @@map("materias_requeridas")
+}
+
+model Experiencia {
+  id        String   @id @default(uuid())
+  alunoId   String
+  aluno     Aluno    @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  empresa   String
+  cargo     String
+  periodo   String
+  descricao String
+  createdAt DateTime @default(now())
+
+  @@map("experiencias")
+}
+
+model DocumentoSimulado {
+  id         String   @id @default(uuid())
+  alunoId    String
+  aluno      Aluno    @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  nome       String
+  tipo       String
+  dataEnvio  String
+  status     String   @default("Pendente")
+  arquivoUrl String?
+  createdAt  DateTime @default(now())
+
+  @@map("documentos_simulados")
+}

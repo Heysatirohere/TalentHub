@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { 
@@ -8,9 +8,15 @@ import {
   GraduationCap, 
   ArrowRight, 
   CheckCircle2, 
-  LogIn
+  LogIn,
+  KeyRound,
+  Mail,
+  AlertCircle,
+  Sparkles
 } from "lucide-react";
 import { useTalent } from "@/context/TalentContext";
+import { registerUser } from "@/services/authService";
+import { parseRA } from "@/lib/fecapRa";
 
 const CURSOS_FECAP = [
   "Ciência da Computação",
@@ -24,53 +30,105 @@ const CURSOS_FECAP = [
 
 export default function CadastroInicialPage() {
   const router = useRouter();
-  const { adicionarAluno } = useTalent();
+  const { adicionarAluno, loginAs } = useTalent();
 
   const [ra, setRa] = useState(() => "260" + Math.floor(1000 + Math.random() * 9000));
   const [nome, setNome] = useState("");
   const [curso, setCurso] = useState(CURSOS_FECAP[0]);
   const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
   const [idade, setIdade] = useState<number>(21);
-  const [semestre, setSemestre] = useState<number>(5);
+  const [semestre, setSemestre] = useState<number>(1);
+  
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Recalcular automaticamente o semestre quando o RA for alterado
+  useEffect(() => {
+    const info = parseRA(ra);
+    if (info.statusRA === "Válido") {
+      setSemestre(info.semestreSugerido);
+    }
+  }, [ra]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
 
-    if (!ra.trim() || !nome.trim() || !email.trim()) {
-      alert("Por favor, preencha todos os campos obrigatórios (RA, Nome e E-mail).");
+    if (!ra.trim() || !nome.trim() || !email.trim() || !senha.trim()) {
+      setErrorMessage("Por favor, preencha todos os campos obrigatórios (RA, Nome, E-mail e Senha).");
       return;
     }
 
-    await adicionarAluno({
-      ra,
-      nome,
-      email,
-      curso,
-      semestre,
-      idade,
-      feedbacksProfessores: [
-        `Aluno devidamente cadastrado no RA ${ra} e aprovado pela Secretaria Acadêmica FECAP.`,
-      ],
-      softSkills: {
-        comunicacao: true,
-        trabalhoEmEquipe: true,
-        lideranca: false,
-        resolucaoProblemas: true,
-        adaptabilidade: true,
-        pensamentoCritico: true,
-      },
-      hardSkills: {
-        tecnologia: 80,
-        humanas: 75,
-        negocios: 80,
-        exatas: 75,
-        design: 70,
-      },
-    });
+    if (senha !== confirmarSenha) {
+      setErrorMessage("As senhas digitadas não coincidem.");
+      return;
+    }
 
-    alert(`Aluno ${nome} (RA ${ra}) cadastrado com sucesso! Redirecionando para o Hub do Aluno.`);
-    router.push("/aluno");
+    if (senha.length < 6) {
+      setErrorMessage("A senha deve conter no mínimo 6 caracteres.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // 1. Criar o User com senha criptografada via Server Action
+      const res = await registerUser({
+        email,
+        senha,
+        role: "ALUNO",
+        ra,
+        nome,
+        curso,
+        semestre,
+        idade,
+      });
+
+      if (!res.success) {
+        setErrorMessage(res.error || "Erro ao realizar o cadastro.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 2. Adicionar no contexto de aplicação
+      await adicionarAluno({
+        ra,
+        nome,
+        email,
+        curso,
+        semestre,
+        idade,
+        feedbacksProfessores: [
+          `Aluno cadastrado com sucesso no RA ${ra} e aprovado pela Secretaria Acadêmica FECAP.`,
+        ],
+        softSkills: {
+          comunicacao: true,
+          trabalhoEmEquipe: true,
+          lideranca: false,
+          resolucaoProblemas: true,
+          adaptabilidade: true,
+          pensamentoCritico: true,
+        },
+        historicoAcademico: [
+          { materia: "Engenharia de Software", nota: 9.0, semestre: "2025.2" },
+          { materia: "Desenvolvimento Web Front-End", nota: 8.8, semestre: "2025.1" },
+          { materia: "Banco de Dados SQL", nota: 8.5, semestre: "2024.2" },
+        ],
+      });
+
+      loginAs("aluno", ra);
+      router.push("/aluno");
+    } catch (err: any) {
+      console.error("Erro no cadastro:", err);
+      setErrorMessage("Erro inesperado durante o cadastro.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const infoRA = parseRA(ra);
 
   return (
     <main className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -81,11 +139,18 @@ export default function CadastroInicialPage() {
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
             <GraduationCap className="w-6 h-6 text-slate-950" />
           </div>
-          <h1 className="text-2xl font-extrabold text-white">Cadastro Inicial de Aluno FECAP</h1>
+          <h1 className="text-2xl font-extrabold text-white">Criar Perfil de Aluno FECAP</h1>
           <p className="text-xs text-slate-400">
-            Informe suas credenciais acadêmicas para liberar o acesso ao Hub do Aluno.
+            Preencha seus dados acadêmicos e defina sua senha para acessar o sistema.
           </p>
         </div>
+
+        {errorMessage && (
+          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center space-x-2.5">
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            <span className="font-semibold">{errorMessage}</span>
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -103,6 +168,9 @@ export default function CadastroInicialPage() {
                 onChange={(e) => setRa(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs focus:outline-none focus:border-teal-500"
               />
+              <span className="text-[10px] text-teal-400 mt-1 block">
+                Ano Ingresso: {infoRA.anoIngresso} &bull; {infoRA.anoLetivo}
+              </span>
             </div>
 
             <div>
@@ -139,14 +207,54 @@ export default function CadastroInicialPage() {
             <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
               E-mail Institucional *
             </label>
-            <input
-              type="email"
-              required
-              placeholder="seu.nome@aluno.fecap.br"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-teal-500"
-            />
+            <div className="relative">
+              <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+              <input
+                type="email"
+                required
+                placeholder="seu.nome@aluno.fecap.br"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-teal-500"
+              />
+            </div>
+          </div>
+
+          {/* Senha e Confirmar Senha */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                Senha de Acesso *
+              </label>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                <input
+                  type="password"
+                  required
+                  placeholder="Mínimo 6 caracteres"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-teal-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                Confirmar Senha *
+              </label>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                <input
+                  type="password"
+                  required
+                  placeholder="Repita a senha"
+                  value={confirmarSenha}
+                  onChange={(e) => setConfirmarSenha(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-teal-500"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -167,7 +275,7 @@ export default function CadastroInicialPage() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Semestre Atual ({semestre}º)
+                Semestre Atual Gravado no Banco ({semestre}º)
               </label>
               <input
                 type="range"
@@ -177,15 +285,19 @@ export default function CadastroInicialPage() {
                 onChange={(e) => setSemestre(Number(e.target.value))}
                 className="w-full accent-teal-500 mt-2"
               />
+              <span className="text-[10px] text-slate-400 mt-1 block">
+                Ajuste manualmente em caso de reprovação/trancamento.
+              </span>
             </div>
           </div>
 
           <button
             type="submit"
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 flex items-center justify-center space-x-2 transition-all"
+            disabled={isSubmitting}
+            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
           >
             <CheckCircle2 className="w-5 h-5 text-slate-950" />
-            <span>Criar Perfil & Entrar no Hub do Aluno</span>
+            <span>{isSubmitting ? "Criando Perfil com Hashing..." : "Criar Perfil & Entrar no Hub do Aluno"}</span>
           </button>
 
         </form>
@@ -193,7 +305,7 @@ export default function CadastroInicialPage() {
         <div className="pt-4 border-t border-slate-800 text-center">
           <Link href="/login" className="text-xs text-slate-400 hover:text-white flex items-center justify-center space-x-1">
             <LogIn className="w-3.5 h-3.5 text-teal-400" />
-            <span>Já possui RA cadastrado? Fazer Login</span>
+            <span>Já possui conta cadastrada? Fazer Login</span>
           </Link>
         </div>
 

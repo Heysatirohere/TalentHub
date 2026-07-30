@@ -22,7 +22,33 @@ export default function Home() {
 
   return (
     <main className="flex-1 flex flex-col justify-between bg-slate-950">
-      
+      {/* Public Header for Landing Page */}
+      <header className="border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:scale-105 transition-transform duration-200">
+              <GraduationCap className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
+                FECAP <span className="text-teal-400">TalentHub</span>
+              </span>
+              <span className="block text-[10px] font-medium text-slate-400 -mt-1 uppercase tracking-wider">
+                Recrutamento & Match
+              </span>
+            </div>
+          </Link>
+
+          <Link
+            href="/login"
+            className="flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold text-slate-950 bg-teal-400 hover:bg-teal-300 shadow-md shadow-teal-500/20 transition-all"
+          >
+            <LogIn className="w-4 h-4 text-slate-950" />
+            <span>Entrar / Selecionar Perfil</span>
+          </Link>
+        </div>
+      </header>
+
       {/* Hero Section SaaS Style */}
       <section className="relative overflow-hidden py-20 md:py-28 border-b border-slate-800/80">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-teal-950/40 via-slate-950 to-slate-950 -z-10" />
