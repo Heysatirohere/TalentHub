@@ -3,20 +3,25 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { 
-  UserPlus, 
-  GraduationCap, 
-  ArrowRight, 
-  CheckCircle2, 
-  LogIn,
-  KeyRound,
-  Mail,
-  AlertCircle,
-  Sparkles
+import {
+  GraduationCap, ArrowRight, CheckCircle2, LogIn,
+  KeyRound, Mail, AlertCircle, User, Sun, Moon
 } from "lucide-react";
 import { useTalent } from "@/context/TalentContext";
 import { registerUser } from "@/services/authService";
 import { parseRA } from "@/lib/fecapRa";
+import { useTheme } from "@/context/ThemeContext";
+
+function NpaLogomark({ size = 40 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 44 44" fill="none" aria-hidden="true">
+      <rect width="44" height="44" rx="13" fill="#00FF55" />
+      <path d="M8 12v20M8 12l11 12V12M19 32V12" stroke="#004A30" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="33" cy="14" r="3" fill="#004A30"/>
+      <path d="M25 32l5.5-11 5.5 11M26.8 27h7.4" stroke="#004A30" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
 
 const CURSOS_FECAP = [
   "Ciência da Computação",
@@ -31,6 +36,7 @@ const CURSOS_FECAP = [
 export default function CadastroInicialPage() {
   const router = useRouter();
   const { adicionarAluno, loginAs } = useTalent();
+  const { theme, toggle } = useTheme();
 
   const [ra, setRa] = useState(() => "260" + Math.floor(1000 + Math.random() * 9000));
   const [nome, setNome] = useState("");
@@ -40,11 +46,10 @@ export default function CadastroInicialPage() {
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [idade, setIdade] = useState<number>(21);
   const [semestre, setSemestre] = useState<number>(1);
-  
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Recalcular automaticamente o semestre quando o RA for alterado
   useEffect(() => {
     const info = parseRA(ra);
     if (info.statusRA === "Válido") {
@@ -57,7 +62,7 @@ export default function CadastroInicialPage() {
     setErrorMessage(null);
 
     if (!ra.trim() || !nome.trim() || !email.trim() || !senha.trim()) {
-      setErrorMessage("Por favor, preencha todos os campos obrigatórios (RA, Nome, E-mail e Senha).");
+      setErrorMessage("Preencha todos os campos obrigatórios.");
       return;
     }
 
@@ -74,7 +79,6 @@ export default function CadastroInicialPage() {
     setIsSubmitting(true);
 
     try {
-      // 1. Criar o User com senha criptografada via Server Action
       const res = await registerUser({
         email,
         senha,
@@ -92,7 +96,6 @@ export default function CadastroInicialPage() {
         return;
       }
 
-      // 2. Adicionar no contexto de aplicação
       await adicionarAluno({
         ra,
         nome,
@@ -100,13 +103,12 @@ export default function CadastroInicialPage() {
         curso,
         semestre,
         idade,
-        feedbacksProfessores: [
-          `Aluno cadastrado com sucesso no RA ${ra} e aprovado pela Secretaria Acadêmica FECAP.`,
-        ],
+        avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250`,
+        feedbacksProfessores: ["Perfil em processo de validação."],
         softSkills: {
           comunicacao: true,
           trabalhoEmEquipe: true,
-          lideranca: false,
+          lideranca: true,
           resolucaoProblemas: true,
           adaptabilidade: true,
           pensamentoCritico: true,
@@ -120,10 +122,9 @@ export default function CadastroInicialPage() {
 
       loginAs("aluno", ra);
       router.push("/aluno");
-    } catch (err: any) {
-      console.error("Erro no cadastro:", err);
+    } catch {
       setErrorMessage("Erro inesperado durante o cadastro.");
-    } finally {
+    } flex-1 {
       setIsSubmitting(false);
     }
   };
@@ -131,184 +132,215 @@ export default function CadastroInicialPage() {
   const infoRA = parseRA(ra);
 
   return (
-    <main className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-lg w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
-        
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
-            <GraduationCap className="w-6 h-6 text-slate-950" />
-          </div>
-          <h1 className="text-2xl font-extrabold text-white">Criar Perfil de Aluno FECAP</h1>
-          <p className="text-xs text-slate-400">
-            Preencha seus dados acadêmicos e defina sua senha para acessar o sistema.
-          </p>
-        </div>
+    <main
+      className="flex-1 flex items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8"
+      style={{ background: "var(--bg-base)" }}
+    >
+      <div className="w-full max-w-lg mx-auto animate-fade-up">
+        <div
+          className="rounded-3xl border overflow-hidden"
+          style={{
+            background: "var(--bg-surface)",
+            borderColor: "var(--border-base)",
+            boxShadow: "var(--shadow-lg)",
+          }}
+        >
+          {/* Top accent line */}
+          <div className="h-1 bg-gradient-to-r from-[#004A30] via-[#00FF55] to-[#004A30]" />
 
-        {errorMessage && (
-          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center space-x-2.5">
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-            <span className="font-semibold">{errorMessage}</span>
-          </div>
-        )}
+          <div className="p-6 sm:p-8 space-y-6">
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                RA (Registro Acadêmico) *
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Ex: 26028671"
-                value={ra}
-                onChange={(e) => setRa(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs focus:outline-none focus:border-teal-500"
-              />
-              <span className="text-[10px] text-teal-400 mt-1 block">
-                Ano Ingresso: {infoRA.anoIngresso} &bull; {infoRA.anoLetivo}
-              </span>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Idade *
-              </label>
-              <input
-                type="number"
-                required
-                min={17}
-                max={99}
-                value={idade}
-                onChange={(e) => setIdade(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-teal-500"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-              Nome Completo *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Ex: Lucas Ferreira"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-teal-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-              E-mail Institucional *
-            </label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
-              <input
-                type="email"
-                required
-                placeholder="seu.nome@aluno.fecap.br"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-teal-500"
-              />
-            </div>
-          </div>
-
-          {/* Senha e Confirmar Senha */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Senha de Acesso *
-              </label>
-              <div className="relative">
-                <KeyRound className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
-                <input
-                  type="password"
-                  required
-                  placeholder="Mínimo 6 caracteres"
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-teal-500"
-                />
+            {/* Header */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <NpaLogomark size={40} />
+                <div>
+                  <h1 className="text-xl font-black text-head tracking-tight leading-none">NPA FECAP</h1>
+                  <p className="text-[11px] text-muted uppercase tracking-widest font-medium">
+                    Cadastro de Aluno
+                  </p>
+                </div>
               </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Confirmar Senha *
-              </label>
-              <div className="relative">
-                <KeyRound className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
-                <input
-                  type="password"
-                  required
-                  placeholder="Repita a senha"
-                  value={confirmarSenha}
-                  onChange={(e) => setConfirmarSenha(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-teal-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Curso FECAP
-              </label>
-              <select
-                value={curso}
-                onChange={(e) => setCurso(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-teal-500"
+              <button
+                onClick={toggle}
+                className="npa-btn-ghost w-8 h-8 p-0 justify-center"
+                aria-label="Alternar tema"
               >
-                {CURSOS_FECAP.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Semestre Atual Gravado no Banco ({semestre}º)
-              </label>
-              <input
-                type="range"
-                min={1}
-                max={8}
-                value={semestre}
-                onChange={(e) => setSemestre(Number(e.target.value))}
-                className="w-full accent-teal-500 mt-2"
-              />
-              <span className="text-[10px] text-slate-400 mt-1 block">
-                Ajuste manualmente em caso de reprovação/trancamento.
-              </span>
+            {errorMessage && (
+              <div
+                className="p-3.5 rounded-xl flex items-center gap-2.5 text-xs font-semibold animate-fade-in"
+                style={{ background: "var(--red-bg)", borderColor: "var(--red-border)", border: "1px solid", color: "var(--red-text)" }}
+              >
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-muted uppercase tracking-wider">
+                    RA (Registro Acadêmico) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex: 26028671"
+                    value={ra}
+                    onChange={(e) => setRa(e.target.value)}
+                    className="npa-input font-mono"
+                  />
+                  <span className="text-[10px] text-npa font-semibold block mt-0.5">
+                    Ano Ingresso: {infoRA.anoIngresso} &bull; {infoRA.anoLetivo}
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-muted uppercase tracking-wider">
+                    Idade *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min={16}
+                    max={99}
+                    value={idade}
+                    onChange={(e) => setIdade(Number(e.target.value))}
+                    className="npa-input"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold text-muted uppercase tracking-wider">
+                  Nome Completo *
+                </label>
+                <div className="relative">
+                  <User className="w-4 h-4 absolute left-3 top-2.5" style={{ color: "var(--text-subtle)" }} />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex: Gabriel Silva"
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    className="npa-input pl-9"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-muted uppercase tracking-wider">
+                    Curso FECAP *
+                  </label>
+                  <select
+                    value={curso}
+                    onChange={(e) => setCurso(e.target.value)}
+                    className="npa-select"
+                  >
+                    {CURSOS_FECAP.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-muted uppercase tracking-wider">
+                    Semestre Atual *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    max={10}
+                    value={semestre}
+                    onChange={(e) => setSemestre(Number(e.target.value))}
+                    className="npa-input"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold text-muted uppercase tracking-wider">
+                  E-mail Institucional *
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 absolute left-3 top-2.5" style={{ color: "var(--text-subtle)" }} />
+                  <input
+                    type="email"
+                    required
+                    placeholder="ex: aluno@fecap.br"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="npa-input pl-9"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-muted uppercase tracking-wider">
+                    Senha de Acesso *
+                  </label>
+                  <div className="relative">
+                    <KeyRound className="w-4 h-4 absolute left-3 top-2.5" style={{ color: "var(--text-subtle)" }} />
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={senha}
+                      onChange={(e) => setSenha(e.target.value)}
+                      className="npa-input pl-9"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-muted uppercase tracking-wider">
+                    Confirmar Senha *
+                  </label>
+                  <div className="relative">
+                    <KeyRound className="w-4 h-4 absolute left-3 top-2.5" style={{ color: "var(--text-subtle)" }} />
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={confirmarSenha}
+                      onChange={(e) => setConfirmarSenha(e.target.value)}
+                      className="npa-input pl-9"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="npa-btn-primary w-full justify-center py-3.5 rounded-xl text-sm disabled:opacity-50 mt-2"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>{isSubmitting ? "Cadastrando..." : "Concluir Cadastro"}</span>
+              </button>
+            </form>
+
+            <div className="pt-4 border-t text-center" style={{ borderColor: "var(--border-light)" }}>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-head transition-colors"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                Já possui conta? Faça login aqui
+              </Link>
             </div>
+
           </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
-          >
-            <CheckCircle2 className="w-5 h-5 text-slate-950" />
-            <span>{isSubmitting ? "Criando Perfil com Hashing..." : "Criar Perfil & Entrar no Hub do Aluno"}</span>
-          </button>
-
-        </form>
-
-        <div className="pt-4 border-t border-slate-800 text-center">
-          <Link href="/login" className="text-xs text-slate-400 hover:text-white flex items-center justify-center space-x-1">
-            <LogIn className="w-3.5 h-3.5 text-teal-400" />
-            <span>Já possui conta cadastrada? Fazer Login</span>
-          </Link>
         </div>
-
       </div>
     </main>
   );

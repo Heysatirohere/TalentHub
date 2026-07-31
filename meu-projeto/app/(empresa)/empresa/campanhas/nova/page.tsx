@@ -3,15 +3,9 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { 
-  PlusCircle, 
-  ArrowLeft, 
-  ShieldCheck, 
-  BookOpen, 
-  Check,
-  AlertTriangle,
-  Trash2,
-  Plus
+import {
+  PlusCircle, ArrowLeft, ShieldCheck, BookOpen,
+  Check, Trash2, Plus, Building2
 } from "lucide-react";
 import { useTalent } from "@/context/TalentContext";
 import { SoftSkills, SOFT_SKILLS_LABELS, IMateriaRequerida } from "@/types/talent";
@@ -53,7 +47,6 @@ export default function NovaCampanhaVagaPage() {
     pensamentoCritico: false,
   });
 
-  // Lista de Matérias Requeridas da Vaga com Pesos
   const [materiasRequeridas, setMateriasRequeridas] = useState<IMateriaRequerida[]>([
     { nomeDaMateria: "Engenharia de Software", peso: 5 },
     { nomeDaMateria: "Banco de Dados SQL", peso: 4 },
@@ -117,31 +110,38 @@ export default function NovaCampanhaVagaPage() {
   };
 
   return (
-    <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
-      
-      <div className="flex items-center space-x-3">
-        <Link href="/empresa" className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white">
+    <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
+
+      {/* ── Header ── */}
+      <div className="flex items-center gap-3 animate-fade-up">
+        <Link href="/empresa" className="npa-btn-ghost p-2 rounded-xl shrink-0" aria-label="Voltar">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <div>
-          <h1 className="text-2xl font-extrabold text-white">Abertura de Nova Campanha de Vaga</h1>
-          <p className="text-xs text-slate-400">
-            Cadastre os requisitos acadêmicos e matérias com peso para o cálculo de Média Ponderada.
+        <div className="min-w-0">
+          <div className="npa-badge inline-flex mb-1">
+            <Building2 className="w-3 h-3" />
+            Nova Campanha
+          </div>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-head leading-tight">
+            Abertura de Vaga
+          </h1>
+          <p className="text-xs text-muted">
+            Cadastre os requisitos acadêmicos e matérias ponderadas para o algoritmo de match.
           </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        
-        {/* Basic Info */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
-          <h2 className="text-sm font-bold text-teal-400 uppercase tracking-wider">
+      <form onSubmit={handleSubmit} className="space-y-6">
+
+        {/* ── 1. Dados Gerais ── */}
+        <div className="npa-card rounded-2xl p-5 sm:p-6 space-y-4">
+          <h2 className="text-xs font-bold text-npa uppercase tracking-wider">
             1. Dados Gerais da Vaga
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+            <div className="space-y-1">
+              <label className="block text-[11px] font-bold text-muted uppercase tracking-wider">
                 Título da Vaga / Posição *
               </label>
               <input
@@ -150,12 +150,12 @@ export default function NovaCampanhaVagaPage() {
                 placeholder="Ex: Estagiário de Desenvolvimento Full Stack"
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-teal-500"
+                className="npa-input"
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+            <div className="space-y-1">
+              <label className="block text-[11px] font-bold text-muted uppercase tracking-wider">
                 Nome da Empresa *
               </label>
               <input
@@ -163,20 +163,20 @@ export default function NovaCampanhaVagaPage() {
                 required
                 value={empresa}
                 onChange={(e) => setEmpresa(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-teal-500"
+                className="npa-input"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+            <div className="space-y-1">
+              <label className="block text-[11px] font-bold text-muted uppercase tracking-wider">
                 Tipo de Contrato
               </label>
               <select
                 value={tipoContrato}
                 onChange={(e) => setTipoContrato(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-teal-500"
+                className="npa-select"
               >
                 <option value="Estágio">Estágio</option>
                 <option value="Júnior">Júnior</option>
@@ -185,22 +185,22 @@ export default function NovaCampanhaVagaPage() {
               </select>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+            <div className="space-y-1">
+              <label className="block text-[11px] font-bold text-muted uppercase tracking-wider">
                 Localização / Modelo
               </label>
               <input
                 type="text"
                 value={localizacao}
                 onChange={(e) => setLocalizacao(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-teal-500"
+                className="npa-input"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-              Descrição das Atividades & Responsabilidades *
+          <div className="space-y-1">
+            <label className="block text-[11px] font-bold text-muted uppercase tracking-wider">
+              Descrição das Atividades *
             </label>
             <textarea
               rows={3}
@@ -208,39 +208,42 @@ export default function NovaCampanhaVagaPage() {
               placeholder="Descreva brevemente o escopo de atuação e desafios da vaga..."
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-teal-500"
+              className="npa-input"
             />
           </div>
         </div>
 
-        {/* Requisito de Matérias do Histórico Acadêmico */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-teal-400 uppercase tracking-wider flex items-center space-x-2">
-              <BookOpen className="w-4 h-4 text-teal-400" />
-              <span>2. Matérias do Histórico Acadêmico Requeridas & Pesos (1 a 5)</span>
+        {/* ── 2. Matérias do Histórico ── */}
+        <div className="npa-card rounded-2xl p-5 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <h2 className="text-xs font-bold text-npa uppercase tracking-wider flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-npa" />
+              <span>2. Matérias Requeridas & Pesos (1 a 5)</span>
             </h2>
-            <span className="text-xs text-slate-400 font-mono">{materiasRequeridas.length} Matéria(s)</span>
+            <span className="text-xs text-muted font-mono">{materiasRequeridas.length} Adicionada(s)</span>
           </div>
 
-          <p className="text-xs text-slate-400">
-            Defina as matérias da faculdade cujas notas validadas serão ponderadas no algoritmo de match.
+          <p className="text-xs text-muted">
+            Defina matérias cujas notas validadas serão ponderadas no match de talentos.
           </p>
 
-          {/* Form para adicionar matéria */}
-          <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+          {/* Form de adição */}
+          <div
+            className="p-4 rounded-xl space-y-3 border"
+            style={{ background: "var(--bg-sunken)", borderColor: "var(--border-light)" }}
+          >
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-              <div className="sm:col-span-7">
-                <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                  Nome da Matéria / Disciplina
+              <div className="sm:col-span-7 space-y-1">
+                <label className="block text-[10px] font-bold text-muted uppercase tracking-wider">
+                  Matéria / Disciplina
                 </label>
                 <input
                   type="text"
-                  placeholder="Selecione ou digite ex: Cybersecurity..."
+                  placeholder="Selecione ou digite..."
                   list="sugestoes-materias"
                   value={novaMateriaInput}
                   onChange={(e) => setNovaMateriaInput(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:outline-none focus:border-teal-500"
+                  className="npa-input"
                 />
                 <datalist id="sugestoes-materias">
                   {SUGESTOES_MATERIAS.map((s) => (
@@ -249,20 +252,20 @@ export default function NovaCampanhaVagaPage() {
                 </datalist>
               </div>
 
-              <div className="sm:col-span-3">
-                <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+              <div className="sm:col-span-3 space-y-1">
+                <label className="block text-[10px] font-bold text-muted uppercase tracking-wider">
                   Peso (1 a 5)
                 </label>
                 <select
                   value={novoPesoInput}
                   onChange={(e) => setNovoPesoInput(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs font-mono font-bold focus:outline-none focus:border-teal-500"
+                  className="npa-select"
                 >
-                  {[1, 2, 3, 4, 5].map((p) => (
-                    <option key={p} value={p}>
-                      Peso {p}x
-                    </option>
-                  ))}
+                  <option value={1}>1 (Baixo)</option>
+                  <option value={2}>2 (Médio-Baixo)</option>
+                  <option value={3}>3 (Médio)</option>
+                  <option value={4}>4 (Alto)</option>
+                  <option value={5}>5 (Essencial)</option>
                 </select>
               </div>
 
@@ -270,41 +273,43 @@ export default function NovaCampanhaVagaPage() {
                 <button
                   type="button"
                   onClick={handleAdicionarMateria}
-                  className="w-full py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center justify-center space-x-1 transition-colors"
+                  className="npa-btn-primary w-full justify-center py-2.5 rounded-xl text-xs"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Adicionar</span>
+                  <span>Add</span>
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Lista de matérias adicionadas */}
-          <div className="space-y-2 pt-2">
+          {/* Lista de matérias */}
+          <div className="space-y-2">
             {materiasRequeridas.length === 0 ? (
-              <p className="text-xs text-slate-500 italic p-3 text-center border border-dashed border-slate-800 rounded-xl">
+              <p className="text-xs text-muted italic p-3 text-center border border-dashed rounded-xl" style={{ borderColor: "var(--border-light)" }}>
                 Nenhuma matéria adicionada ainda.
               </p>
             ) : (
               materiasRequeridas.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-xl bg-slate-950 border border-slate-800/80 flex items-center justify-between text-xs gap-2"
+                  className="p-3 rounded-xl border flex items-center justify-between text-xs gap-2"
+                  style={{ background: "var(--bg-raised)", borderColor: "var(--border-light)" }}
                 >
-                  <div className="flex items-center space-x-2 min-w-0 flex-1">
-                    <BookOpen className="w-4 h-4 text-teal-400 shrink-0" />
-                    <span className="font-semibold text-white truncate">{item.nomeDaMateria}</span>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <BookOpen className="w-4 h-4 text-npa shrink-0" />
+                    <span className="font-semibold text-head truncate">{item.nomeDaMateria}</span>
                   </div>
-                  <div className="flex items-center space-x-2 shrink-0">
-                    <span className="px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 font-mono font-bold border border-teal-500/40">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="npa-badge text-[10px]">
                       Peso {item.peso}x
                     </span>
                     <button
                       type="button"
                       onClick={() => handleRemoverMateria(idx)}
-                      className="p-1 rounded-lg text-slate-500 hover:text-red-400 hover:bg-slate-900 transition-colors"
+                      className="npa-btn-ghost p-1.5 rounded-lg text-xs"
+                      title="Remover"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" style={{ color: "var(--red-text)" }} />
                     </button>
                   </div>
                 </div>
@@ -313,14 +318,14 @@ export default function NovaCampanhaVagaPage() {
           </div>
         </div>
 
-        {/* Soft Skills Mandatórias */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
-          <h2 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-2">
-            <ShieldCheck className="w-4 h-4 text-amber-400" />
-            <span>3. Soft Skills Obrigatórias (Corte / Filtro Rigoroso)</span>
+        {/* ── 3. Soft Skills ── */}
+        <div className="npa-card rounded-2xl p-5 sm:p-6 space-y-4">
+          <h2 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: "var(--amber-text)" }}>
+            <ShieldCheck className="w-4 h-4" />
+            <span>3. Soft Skills Obrigatórias (Filtro Rigoroso)</span>
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {(Object.keys(SOFT_SKILLS_LABELS) as (keyof SoftSkills)[]).map((key) => {
               const active = requisitosSoftSkills[key];
               return (
@@ -328,14 +333,18 @@ export default function NovaCampanhaVagaPage() {
                   key={key}
                   type="button"
                   onClick={() => toggleSoft(key)}
-                  className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
+                  className="p-3 rounded-xl border flex items-center justify-between transition-all"
+                  style={
                     active
-                      ? "bg-amber-500/10 border-amber-500/40 text-amber-300"
-                      : "bg-slate-950 border-slate-800 text-slate-500"
-                  }`}
+                      ? { background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber-text)" }
+                      : { background: "var(--bg-sunken)", borderColor: "var(--border-light)", color: "var(--text-muted)" }
+                  }
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-4 h-4 rounded flex items-center justify-center border ${active ? "bg-amber-500 border-amber-500 text-slate-950" : "border-slate-700"}`}>
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className="w-4 h-4 rounded flex items-center justify-center border shrink-0 text-white font-bold"
+                      style={active ? { background: "var(--amber-text)", borderColor: "var(--amber-text)" } : { borderColor: "var(--border-strong)" }}
+                    >
                       {active && <Check className="w-3 h-3 stroke-[3]" />}
                     </div>
                     <span className="text-xs font-semibold">{SOFT_SKILLS_LABELS[key]}</span>
@@ -346,11 +355,16 @@ export default function NovaCampanhaVagaPage() {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-xs text-teal-200 flex items-center space-x-3">
-          <Check className="w-5 h-5 text-teal-400 shrink-0" />
-          <span>Sua vaga é ativada instantaneamente após a publicação e estará disponível para recrutamento.</span>
+        {/* Banner de aviso */}
+        <div
+          className="p-4 rounded-xl text-xs flex items-center gap-3 border"
+          style={{ background: "rgba(0,74,48,0.06)", borderColor: "rgba(0,74,48,0.2)", color: "#004A30" }}
+        >
+          <Check className="w-5 h-5 text-npa shrink-0" />
+          <span>Sua vaga é ativada instantaneamente após a publicação para o algoritmo de match.</span>
         </div>
 
+        {/* Submit */}
         <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
           <button
             type="submit"

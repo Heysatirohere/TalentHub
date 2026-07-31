@@ -156,19 +156,19 @@ export default function Home() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-up delay-300">
-            <Link href="/login" className="npa-btn-primary px-8 py-3.5 text-sm rounded-2xl">
+            <Link href="/login" className="npa-btn-primary w-full sm:w-auto justify-center px-8 py-3.5 text-sm rounded-2xl">
               <LogIn className="w-4 h-4" />
               Acessar Plataforma
               <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link href="/cadastro" className="npa-btn-ghost px-8 py-3.5 text-sm rounded-2xl">
+            <Link href="/cadastro" className="npa-btn-ghost w-full sm:w-auto justify-center px-8 py-3.5 text-sm rounded-2xl">
               <UserPlus className="w-4 h-4" />
               Cadastrar via RA
             </Link>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto pt-10 border-t animate-fade-up delay-400"
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto pt-10 border-t animate-fade-up delay-400"
             style={{ borderColor: "var(--border-light)" }}>
             <StatCard value={alunos.length} label="Estudantes" sub="Cadastrados" delay="0.4s" />
             <StatCard value={vagasAprovadas} label="Campanhas" sub="Aprovadas" delay="0.5s" />
