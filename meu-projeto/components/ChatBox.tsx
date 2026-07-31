@@ -1,120 +1,144 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Send,
+  Loader2,
+  ShieldCheck,
+  CheckCheck,
+  AlertCircle,
+  MessageSquare,
+  Radio,
+} from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import {
   getHistoricoMensagens,
   enviarMensagemAction,
-  IMensagemChat,
 } from "@/services/chatService";
-import { Send, Loader2, MessageSquare, Radio, ShieldCheck, CheckCheck, AlertCircle } from "lucide-react";
+import { IMensagemChat } from "@/types/chat";
 
 interface ChatBoxProps {
   usuarioLogadoId: string;
   destinatarioId: string;
-  destinatarioNome?: string;
-  destinatarioAvatar?: string;
+  destinatarioNome: string;
+  destinatarioAvatar: string;
   destinatarioSubtitulo?: string;
 }
 
 export function ChatBox({
   usuarioLogadoId,
   destinatarioId,
-  destinatarioNome = "Contato FECAP",
-  destinatarioAvatar = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250",
-  destinatarioSubtitulo = "Canal de Comunicação Direta",
+  destinatarioNome,
+  destinatarioAvatar,
+  destinatarioSubtitulo = "Estudante FECAP",
 }: ChatBoxProps) {
   const [mensagens, setMensagens] = useState<IMensagemChat[]>([]);
   const [novoTexto, setNovoTexto] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [erroEnvio, setErroEnvio] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto Scroll para o final da lista de mensagens
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const channelRef = useRef<any>(null);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // 1. Carrega o histórico inicial de mensagens
   useEffect(() => {
-    let isMounted = true;
+    let cancelado = false;
+
     async function carregarHistorico() {
+      if (!usuarioLogadoId || !destinatarioId) return;
+
       setCarregando(true);
       setErroEnvio(null);
-      const historico = await getHistoricoMensagens(usuarioLogadoId, destinatarioId);
-      if (isMounted) {
-        setMensagens(historico);
-        setCarregando(false);
+
+      try {
+        const data = await getHistoricoMensagens(
+          usuarioLogadoId,
+          destinatarioId
+        );
+        if (!cancelado) {
+          setMensagens(data);
+          setTimeout(scrollToBottom, 100);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar historico:", err);
+        if (!cancelado) {
+          setErroEnvio("Não foi possível carregar o histórico de mensagens.");
+        }
+      } finally {
+        if (!cancelado) {
+          setCarregando(false);
+        }
       }
     }
+
     carregarHistorico();
+
     return () => {
-      isMounted = false;
+      cancelado = true;
     };
   }, [usuarioLogadoId, destinatarioId]);
 
-  // 2. Inscrição no Supabase Realtime (escuntando eventos de INSERT na tabela mensagens)
   useEffect(() => {
-    const channelName = `chat_${[usuarioLogadoId, destinatarioId].sort().join("_")}`;
-    
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "mensagens",
-        },
-        (payload) => {
-          const newMsg = payload.new as any;
-          if (
-            (newMsg.remetenteId === usuarioLogadoId && newMsg.destinatarioId === destinatarioId) ||
-            (newMsg.remetenteId === destinatarioId && newMsg.destinatarioId === usuarioLogadoId)
-          ) {
-            const formattedMsg: IMensagemChat = {
-              id: newMsg.id,
-              remetenteId: newMsg.remetenteId,
-              destinatarioId: newMsg.destinatarioId,
-              conteudo: newMsg.conteudo,
-              lida: newMsg.lida ?? false,
-              createdAt: newMsg.createdAt ? new Date(newMsg.createdAt).toISOString() : new Date().toISOString(),
-            };
+    if (!usuarioLogadoId || !destinatarioId) return;
 
-            setMensagens((prev) => {
-              if (prev.some((m) => m.id === formattedMsg.id)) return prev;
-              return [...prev, formattedMsg];
-            });
-          }
+    if (!supabase) {
+      console.warn("Supabase Client não inicializado no navegador.");
+      return;
+    }
+
+    const ids = [usuarioLogadoId, destinatarioId].sort();
+    const channelName = `chat_room_${ids.join("_")}`;
+
+    const channel = supabase.channel(channelName, {
+      config: {
+        broadcast: { self: false },
+      },
+    });
+
+    channel
+      .on("broadcast", { event: "new_message" }, (payload) => {
+        if (payload?.payload) {
+          const novaMsg = payload.payload as IMensagemChat;
+          setMensagens((prev) => {
+            if (prev.some((m) => m.id === novaMsg.id)) return prev;
+            return [...prev, novaMsg];
+          });
+          setTimeout(scrollToBottom, 50);
         }
-      )
-      .subscribe();
+      })
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          console.log(`[Supabase Realtime] Conectado ao canal ${channelName}`);
+        }
+      });
+
+    channelRef.current = channel;
 
     return () => {
       supabase.removeChannel(channel);
     };
   }, [usuarioLogadoId, destinatarioId]);
 
-  // Auto-scroll sempre que a lista de mensagens for atualizada
   useEffect(() => {
     scrollToBottom();
   }, [mensagens]);
 
-  // 3. Envio de Mensagem Resiliente chamando a Server Action
   const handleEnviarMensagem = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setErroEnvio(null);
 
     const textoLimpo = novoTexto.trim();
 
-    // Validação prévia dos IDs
-    if (!destinatarioId || !destinatarioId.trim() || destinatarioId === "undefined" || destinatarioId === "null") {
-      setErroEnvio("Erro: Usuário destinatário inválido ou não informado.");
+    if (!destinatarioId || destinatarioId === "undefined") {
+      setErroEnvio("Erro: Usuário destinatário inválido.");
       return;
     }
 
-    if (!usuarioLogadoId || !usuarioLogadoId.trim() || usuarioLogadoId === "undefined" || usuarioLogadoId === "null") {
+    if (!usuarioLogadoId || usuarioLogadoId === "undefined") {
       setErroEnvio("Erro: Sessão do usuário logado inválida.");
       return;
     }
@@ -125,7 +149,6 @@ export function ChatBox({
     const textoParaEnviar = textoLimpo;
     setNovoTexto("");
 
-    // Adição otimista da mensagem para resposta visual imediata
     const msgOtimista: IMensagemChat = {
       id: `temp-${Date.now()}`,
       remetenteId: usuarioLogadoId,
@@ -138,100 +161,138 @@ export function ChatBox({
     setMensagens((prev) => [...prev, msgOtimista]);
 
     try {
-      const res = await enviarMensagemAction(usuarioLogadoId, destinatarioId, textoParaEnviar);
+      const res = await enviarMensagemAction(
+        usuarioLogadoId,
+        destinatarioId,
+        textoParaEnviar
+      );
       if (res.success && res.data) {
+        const msgFinal = res.data as IMensagemChat;
         setMensagens((prev) =>
-          prev.map((m) => (m.id === msgOtimista.id ? (res.data as IMensagemChat) : m))
+          prev.map((m) => (m.id === msgOtimista.id ? msgFinal : m))
         );
+
+        try {
+          channelRef.current?.send({
+            type: "broadcast",
+            event: "new_message",
+            payload: msgFinal,
+          });
+        } catch (bErr) {
+          console.warn("Erro no Supabase Broadcast:", bErr);
+        }
       } else {
-        setErroEnvio(res.error || "Falha ao enviar mensagem ao servidor.");
+        setErroEnvio(res.error || "Falha ao enviar mensagem.");
         setMensagens((prev) => prev.filter((m) => m.id !== msgOtimista.id));
         setNovoTexto(textoParaEnviar);
       }
-    } catch (err: any) {
-      console.error("Erro inesperado ao enviar mensagem:", err);
+    } catch {
       setErroEnvio("Erro de comunicação ao enviar mensagem.");
       setMensagens((prev) => prev.filter((m) => m.id !== msgOtimista.id));
       setNovoTexto(textoParaEnviar);
     } finally {
-      // Garante que o estado de envio SEMPRE é liberado (evita loading infinito)
       setEnviando(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-[560px] w-full max-w-3xl mx-auto rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl overflow-hidden backdrop-blur-md">
-      {/* Header do Chat */}
-      <div className="px-6 py-4 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between">
-        <div className="flex items-center space-x-3.5">
-          <div className="relative">
+    <div
+      className="flex flex-col h-[480px] sm:h-[540px] max-h-[80vh] w-full max-w-3xl mx-auto rounded-2xl border shadow-lg overflow-hidden"
+      style={{
+        background: "var(--bg-surface)",
+        borderColor: "var(--border-light)",
+      }}
+    >
+      {/* Header */}
+      <div
+        className="px-4 py-3 border-b flex items-center justify-between gap-3 shrink-0"
+        style={{
+          background: "var(--bg-raised)",
+          borderColor: "var(--border-light)",
+        }}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="relative shrink-0">
             <img
               src={destinatarioAvatar}
               alt={destinatarioNome}
-              className="w-11 h-11 rounded-2xl object-cover border border-slate-700 shadow-md"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-cover border"
+              style={{ borderColor: "var(--border-strong)" }}
             />
-            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-950 animate-pulse" />
+            <span
+              className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2"
+              style={{ borderColor: "var(--bg-raised)" }}
+            />
           </div>
-          <div>
-            <h3 className="text-base font-bold text-white tracking-tight flex items-center space-x-2">
-              <span>{destinatarioNome}</span>
+          <div className="min-w-0">
+            <h3 className="text-xs sm:text-sm font-bold text-head truncate">
+              {destinatarioNome}
             </h3>
-            <p className="text-xs text-slate-400 flex items-center space-x-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{destinatarioSubtitulo}</span>
+            <p className="text-[11px] text-muted flex items-center gap-1 truncate">
+              <ShieldCheck className="w-3 h-3 text-npa shrink-0" />
+              <span className="truncate">{destinatarioSubtitulo}</span>
             </p>
           </div>
         </div>
 
-        {/* Realtime Status Indicator */}
-        <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-semibold">
-          <Radio className="w-3.5 h-3.5 animate-pulse" />
-          <span>Supabase Realtime</span>
+        <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full npa-badge text-[10px]">
+          <Radio className="w-3 h-3 text-npa animate-pulse" />
+          <span>Realtime</span>
         </div>
       </div>
 
-      {/* Área de Histórico de Mensagens */}
-      <div className="flex-1 p-6 overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-slate-800">
+      {/* Histórico */}
+      <div className="flex-1 p-4 overflow-y-auto space-y-3">
         {carregando ? (
-          <div className="h-full flex items-center justify-center space-x-2 text-slate-400 text-sm">
-            <Loader2 className="w-5 h-5 animate-spin text-cyan-400" />
-            <span>Carregando histórico do chat...</span>
+          <div className="h-full flex items-center justify-center gap-2 text-muted text-xs">
+            <Loader2 className="w-4 h-4 animate-spin text-npa" />
+            <span>Carregando mensagens...</span>
           </div>
         ) : mensagens.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
-            <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
-              <MessageSquare className="w-7 h-7" />
-            </div>
-            <h4 className="text-sm font-bold text-white">Inicie a Conversa</h4>
-            <p className="text-xs text-slate-400 max-w-xs">
-              Envie uma mensagem abaixo para abrir o canal direto via Supabase Realtime WebSockets.
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-2">
+            <MessageSquare className="w-8 h-8 text-subtle" strokeWidth={1} />
+            <h4 className="text-xs font-bold text-head">Inicie a Conversa</h4>
+            <p className="text-[11px] text-muted max-w-xs">
+              Envie uma mensagem abaixo para abrir o canal direto.
             </p>
           </div>
         ) : (
           mensagens.map((msg) => {
             const ehRemetente = msg.remetenteId === usuarioLogadoId;
-            const horaFormatada = new Date(msg.createdAt).toLocaleTimeString("pt-BR", {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
+            const horaFormatada = new Date(msg.createdAt).toLocaleTimeString(
+              "pt-BR",
+              { hour: "2-digit", minute: "2-digit" }
+            );
 
             return (
               <div
                 key={msg.id}
-                className={`flex flex-col ${ehRemetente ? "items-end" : "items-start"} space-y-1`}
+                className={`flex flex-col ${
+                  ehRemetente ? "items-end" : "items-start"
+                } space-y-0.5`}
               >
                 <div
-                  className={`max-w-[78%] px-4 py-3 text-xs leading-relaxed transition-all shadow-md ${
+                  className="max-w-[85%] sm:max-w-[75%] px-3.5 py-2.5 text-xs leading-relaxed rounded-2xl shadow-sm"
+                  style={
                     ehRemetente
-                      ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-medium rounded-2xl rounded-tr-none shadow-cyan-500/10"
-                      : "bg-slate-800 text-slate-100 rounded-2xl rounded-tl-none border border-slate-700"
-                  }`}
+                      ? {
+                          background: "#004A30",
+                          color: "#ffffff",
+                          borderBottomRightRadius: "4px",
+                        }
+                      : {
+                          background: "var(--bg-raised)",
+                          color: "var(--text-head)",
+                          border: "1px solid var(--border-light)",
+                          borderBottomLeftRadius: "4px",
+                        }
+                  }
                 >
                   {msg.conteudo}
                 </div>
-                <div className="flex items-center space-x-1 px-1 text-[10px] text-slate-500">
+                <div className="flex items-center gap-1 px-1 text-[10px] text-subtle">
                   <span>{horaFormatada}</span>
-                  {ehRemetente && <CheckCheck className="w-3 h-3 text-cyan-400" />}
+                  {ehRemetente && <CheckCheck className="w-3 h-3 text-npa" />}
                 </div>
               </div>
             );
@@ -240,46 +301,57 @@ export function ChatBox({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Alerta de Erro de Envio */}
+      {/* Erro */}
       {erroEnvio && (
-        <div className="px-4 py-2 bg-rose-500/10 border-t border-rose-500/30 text-rose-300 text-xs flex items-center justify-between animate-fadeIn">
-          <div className="flex items-center space-x-2">
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+        <div
+          className="px-4 py-2 text-xs flex items-center justify-between animate-fade-in"
+          style={{
+            background: "var(--red-bg)",
+            color: "var(--red-text)",
+            borderTop: "1px solid var(--red-border)",
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
             <span className="font-semibold">{erroEnvio}</span>
           </div>
           <button
             type="button"
             onClick={() => setErroEnvio(null)}
-            className="text-rose-400 hover:text-white font-bold text-xs underline ml-2"
+            className="font-bold text-xs underline ml-2"
           >
             Dispensar
           </button>
         </div>
       )}
 
-      {/* Formulário de Envio de Mensagem */}
+      {/* Form Envio */}
       <form
         onSubmit={handleEnviarMensagem}
-        className="p-4 bg-slate-950/80 border-t border-slate-800 flex items-center space-x-3"
+        className="p-3 border-t flex items-center gap-2 shrink-0"
+        style={{
+          background: "var(--bg-raised)",
+          borderColor: "var(--border-light)",
+        }}
       >
         <input
           type="text"
           value={novoTexto}
           onChange={(e) => setNovoTexto(e.target.value)}
           placeholder="Digite sua mensagem..."
-          className="flex-1 bg-slate-900 border border-slate-800 focus:border-cyan-500/60 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-500 outline-none transition-all"
+          className="npa-input flex-1 py-2"
         />
         <button
           type="submit"
           disabled={!novoTexto.trim() || enviando}
-          className="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-bold text-xs flex items-center space-x-2 transition-all shadow-lg shadow-cyan-500/10 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+          className="npa-btn-primary px-3.5 py-2 text-xs rounded-xl disabled:opacity-50 shrink-0"
         >
           {enviando ? (
-            <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+            <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <>
-              <span>Enviar</span>
-              <Send className="w-3.5 h-3.5 text-slate-950" />
+              <span className="hidden sm:inline">Enviar</span>
+              <Send className="w-3.5 h-3.5" />
             </>
           )}
         </button>

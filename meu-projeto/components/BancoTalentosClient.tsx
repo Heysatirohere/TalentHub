@@ -449,20 +449,21 @@ export function BancoTalentosClient({
             </button>
 
             {/* Header */}
-            <div className="flex items-center space-x-4 border-b border-gray-200 pb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pb-4" style={{ borderBottom: '1px solid var(--border-light)' }}>
               <img
                 src={selectedAluno.avatarUrl}
                 alt={selectedAluno.nome}
-                className="w-16 h-16 rounded-full border-2 border-[#004A30]/30 object-cover"
+                className="w-14 h-14 rounded-2xl object-cover shrink-0 border-2"
+                style={{ borderColor: 'var(--border-strong)' }}
               />
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h2 className="text-xl font-extrabold text-[#004A30]">{selectedAluno.nome}</h2>
-                  <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded bg-[#004A30]/8 text-[#004A30] border border-[#004A30]/20">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-lg font-extrabold text-head">{selectedAluno.nome}</h2>
+                  <span className="npa-badge text-[10px]">
                     RA: {selectedAluno.ra}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted mt-0.5">
                   {selectedAluno.curso} &bull; {selectedAluno.idade} anos &bull; {selectedAluno.email}
                 </p>
               </div>
@@ -470,47 +471,47 @@ export function BancoTalentosClient({
 
             {/* Official Academic Transcript (Boletim) Table */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-[#004A30] uppercase tracking-wider flex items-center space-x-2">
-                  <BookOpen className="w-4 h-4 text-[#004A30]" />
-                  <span>Boletim / Histórico Validado pela Instituição (FECAP)</span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <h3 className="text-xs font-bold text-npa uppercase tracking-wider flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-npa" />
+                  <span>Boletim / Histórico Validado FECAP</span>
                 </h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#004A30]/8 text-[#004A30] border border-[#004A30]/20">
-                  Validação Oficial Ativa
+                <span className="npa-badge text-[10px] self-start sm:self-auto">
+                  Validação Oficial
                 </span>
               </div>
 
-              <div className="bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden">
+              <div className="rounded-xl border overflow-x-auto" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border-light)' }}>
                 {!selectedAluno.historicoAcademico || selectedAluno.historicoAcademico.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic p-4 text-center">Histórico acadêmico não importado.</p>
+                  <p className="text-xs text-muted italic p-4 text-center">Histórico acadêmico não importado.</p>
                 ) : (
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-[#004A30] text-white/80 font-semibold uppercase text-[10px] border-b border-[#004A30]/20">
+                  <table className="w-full text-left text-xs min-w-[480px] npa-table">
+                    <thead>
                       <tr>
-                        <th className="p-3">Matéria / Disciplina</th>
-                        <th className="p-3">Semestre</th>
-                        <th className="p-3 text-center">Nota (0 a 10)</th>
-                        <th className="p-3 text-right">Selo Institucional</th>
+                        <th>Matéria / Disciplina</th>
+                        <th>Semestre</th>
+                        <th className="text-center">Nota (0 a 10)</th>
+                        <th className="text-right">Selo Institucional</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 text-slate-700">
+                    <tbody className="divide-y" style={{ borderColor: 'var(--border-light)' }}>
                       {selectedAluno.historicoAcademico.map((item, idx) => (
-                        <tr key={idx} className="hover:bg-gray-50">
-                          <td className="p-3 font-semibold text-slate-800">{item.materia}</td>
-                          <td className="p-3 font-mono text-slate-500">{item.semestre}</td>
+                        <tr key={idx}>
+                          <td className="p-3 font-semibold text-head">{item.materia}</td>
+                          <td className="p-3 font-mono text-muted">{item.semestre}</td>
                           <td className="p-3 text-center">
                             <span className={`inline-block font-mono font-bold px-2 py-0.5 rounded ${
                               item.nota >= 8.5
-                                ? "bg-[#004A30]/10 text-[#004A30] border border-[#004A30]/20"
+                                ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
                                 : item.nota >= 7.0
-                                ? "bg-blue-50 text-blue-700 border border-blue-200"
-                                : "bg-amber-50 text-amber-700 border border-amber-200"
+                                ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                : "bg-amber-500/10 text-amber-600 border border-amber-500/20"
                             }`}>
                               {item.nota.toFixed(1)}
                             </span>
                           </td>
-                          <td className="p-3 text-right text-[10px] text-[#004A30] font-semibold">
-                            ✓ FECAP Verificado
+                          <td className="p-3 text-right text-[10px] font-semibold text-npa">
+                            ✓ Verificado
                           </td>
                         </tr>
                       ))}
@@ -568,22 +569,22 @@ export function BancoTalentosClient({
 
             {/* Experiences */}
             <div className="space-y-3">
-              <h3 className="text-xs font-bold text-[#004A30] uppercase tracking-wider flex items-center space-x-2">
-                <Building2 className="w-4 h-4 text-[#004A30]" />
+              <h3 className="text-xs font-bold text-npa uppercase tracking-wider flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-npa" />
                 <span>Histórico de Experiências ({selectedAluno.experiencias?.length || 0})</span>
               </h3>
               {!selectedAluno.experiencias || selectedAluno.experiencias.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">Nenhuma experiência profissional cadastrada.</p>
+                <p className="text-xs text-muted italic">Nenhuma experiência profissional cadastrada.</p>
               ) : (
                 <div className="space-y-2">
                   {selectedAluno.experiencias.map((exp) => (
-                    <div key={exp.id} className="p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs space-y-1">
-                      <div className="flex justify-between font-bold text-slate-800">
+                    <div key={exp.id} className="p-3 rounded-xl border text-xs space-y-1" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border-light)' }}>
+                      <div className="flex flex-col sm:flex-row sm:justify-between font-bold text-head gap-0.5">
                         <span>{exp.cargo}</span>
-                        <span className="text-[#004A30] text-[10px]">{exp.periodo}</span>
+                        <span className="text-npa text-[10px]">{exp.periodo}</span>
                       </div>
-                      <p className="text-[#004A30] font-semibold">{exp.empresa}</p>
-                      <p className="text-slate-500">{exp.descricao}</p>
+                      <p className="text-npa font-semibold">{exp.empresa}</p>
+                      <p className="text-muted">{exp.descricao}</p>
                     </div>
                   ))}
                 </div>
@@ -606,10 +607,10 @@ export function BancoTalentosClient({
             </div>
 
             {/* Actions */}
-            <div className="pt-4 border-t border-gray-200 flex justify-between items-center">
+            <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between items-stretch sm:items-center gap-2" style={{ borderTop: '1px solid var(--border-light)' }}>
               <button
                 onClick={() => setSelectedAluno(null)}
-                className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-semibold text-slate-600 transition-colors"
+                className="npa-btn-ghost justify-center text-xs py-2.5 rounded-xl"
               >
                 Fechar
               </button>
@@ -619,16 +620,15 @@ export function BancoTalentosClient({
                     const targetUserId = selectedAluno.userId || selectedAluno.id;
                     const target = {
                       ...selectedAluno,
-                      userId: targetUserId, // CRÍTICO: Garanta que a propriedade passada seja estritamente o userId (User.id real)
+                      userId: targetUserId,
                     };
                     setSelectedAluno(null);
                     setChatAluno(target);
                   }
                 }}
-                className="px-6 py-2.5 rounded-xl text-white text-xs font-extrabold flex items-center space-x-2 shadow-lg transition-all"
-                style={{ background: "linear-gradient(135deg, #004A30, #006944)" }}
+                className="npa-btn-primary justify-center text-xs py-2.5 rounded-xl"
               >
-                <MessageSquare className="w-4 h-4 text-white" />
+                <MessageSquare className="w-4 h-4" />
                 <span>Enviar Mensagem ao Talento</span>
               </button>
             </div>

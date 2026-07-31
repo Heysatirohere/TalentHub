@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { ChatBox } from "@/components/ChatBox";
 import { IConversaAtiva } from "@/services/chatService";
-import { Search, MessageSquare, GraduationCap, UserCheck, ShieldCheck } from "lucide-react";
+import { MessageSquare, Users, Search } from "lucide-react";
 
 interface EmpresaInboxClientProps {
   empresaUserId: string;
@@ -16,100 +16,102 @@ export function EmpresaInboxClient({
 }: EmpresaInboxClientProps) {
   const [conversas] = useState<IConversaAtiva[]>(conversasIniciais);
   const [alunoSelecionado, setAlunoSelecionado] = useState<IConversaAtiva | null>(
-    conversasIniciais[0] || null
+    conversasIniciais.length > 0 ? conversasIniciais[0] : null
   );
-  const [searchQuery, setSearchQuery] = useState("");
+  const [buscaQuery, setBuscaQuery] = useState("");
 
   const conversasFiltradas = conversas.filter((c) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
+    const q = buscaQuery.toLowerCase();
     return (
       c.alunoNome.toLowerCase().includes(q) ||
-      c.alunoRa.toLowerCase().includes(q) ||
-      c.alunoCurso.toLowerCase().includes(q)
+      c.alunoCurso.toLowerCase().includes(q) ||
+      c.alunoRa.toLowerCase().includes(q)
     );
   });
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      {/* Coluna da Esquerda (Lista estilo WhatsApp/LinkedIn) */}
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      {/* Sidebar de conversas */}
       <div className="lg:col-span-4 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-white flex items-center space-x-2">
-            <GraduationCap className="w-5 h-5 text-cyan-400" />
-            <span>Candidatos & Contatos ({conversasFiltradas.length})</span>
+          <h2 className="text-sm font-bold text-head flex items-center gap-2">
+            <Users className="w-4 h-4 text-npa" />
+            <span>Conversas Ativas</span>
           </h2>
+          <span className="npa-badge text-[10px]">
+            {conversas.length}
+          </span>
         </div>
 
-        {/* Campo de Busca de Alunos */}
+        {/* Busca */}
         <div className="relative">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+          <Search className="w-4 h-4 absolute left-3 top-2.5" style={{ color: "var(--text-subtle)" }} />
           <input
             type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar por aluno, RA ou curso..."
-            className="w-full bg-slate-900 border border-slate-800 focus:border-cyan-500/60 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all"
+            placeholder="Buscar por aluno, curso, RA..."
+            value={buscaQuery}
+            onChange={(e) => setBuscaQuery(e.target.value)}
+            className="npa-input pl-9"
           />
         </div>
 
-        {/* Lista de Conversas */}
-        <div className="space-y-2 max-h-[580px] overflow-y-auto pr-1">
+        {/* Lista */}
+        <div className="space-y-2">
           {conversasFiltradas.length === 0 ? (
-            <div className="p-8 text-center bg-slate-900/60 border border-slate-800 rounded-2xl text-xs text-slate-400">
-              Nenhuma conversa encontrada.
+            <div className="p-8 text-center npa-card rounded-2xl space-y-2">
+              <MessageSquare className="w-8 h-8 mx-auto text-subtle" strokeWidth={1} />
+              <p className="font-bold text-xs text-head">Nenhuma conversa encontrada</p>
+              <p className="text-[11px] text-muted">
+                Inicie uma prospecção ativa no Banco de Talentos.
+              </p>
             </div>
           ) : (
             conversasFiltradas.map((item) => {
               const isSelected = alunoSelecionado?.alunoId === item.alunoId;
-              const horaFormatada = new Date(item.ultimaMensagemData).toLocaleTimeString(
-                "pt-BR",
-                { hour: "2-digit", minute: "2-digit" }
-              );
+              const dataMsg = new Date(item.dataUltimaMensagem);
+              const horaFormatada = dataMsg.toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              });
 
               return (
                 <div
                   key={item.alunoId}
                   onClick={() => setAlunoSelecionado(item)}
-                  className={`p-4 rounded-2xl border cursor-pointer transition-all duration-200 flex items-start space-x-3.5 ${
+                  className="p-3.5 rounded-2xl border cursor-pointer transition-all flex items-start gap-3"
+                  style={
                     isSelected
-                      ? "bg-gradient-to-r from-cyan-950/50 to-slate-900 border-cyan-500/60 shadow-lg shadow-cyan-500/10"
-                      : "bg-slate-900/80 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900"
-                  }`}
+                      ? { background: "rgba(0,74,48,0.08)", borderColor: "rgba(0,74,48,0.25)", boxShadow: "var(--shadow-sm)" }
+                      : { background: "var(--bg-surface)", borderColor: "var(--border-light)" }
+                  }
                 >
-                  {/* Avatar do Aluno */}
                   <div className="relative shrink-0">
                     <img
                       src={item.alunoAvatarUrl}
                       alt={item.alunoNome}
-                      className={`w-12 h-12 rounded-2xl object-cover border ${
-                        isSelected ? "border-cyan-400" : "border-slate-700"
-                      }`}
+                      className="w-11 h-11 rounded-xl object-cover border-2"
+                      style={{ borderColor: isSelected ? "#00C951" : "var(--border-strong)" }}
                     />
-                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-950" />
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2" style={{ borderColor: "var(--bg-surface)" }} />
                   </div>
 
-                  {/* Informações Resumidas */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <h3
-                        className={`text-sm font-bold truncate ${
-                          isSelected ? "text-cyan-300" : "text-white"
-                        }`}
-                      >
+                    <div className="flex items-center justify-between gap-1">
+                      <h3 className={`text-xs font-bold truncate ${isSelected ? "text-npa" : "text-head"}`}>
                         {item.alunoNome}
                       </h3>
-                      <span className="text-[10px] text-slate-500 font-mono shrink-0 ml-1">
+                      <span className="text-[10px] text-subtle font-mono shrink-0">
                         {horaFormatada}
                       </span>
                     </div>
 
-                    <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                    <p className="text-[11px] text-muted truncate mt-0.5">
                       {item.alunoCurso} • RA: {item.alunoRa}
                     </p>
 
-                    <p className="text-xs text-slate-300 truncate mt-1 italic">
-                      "{item.ultimaMensagem}"
+                    <p className="text-xs text-body truncate mt-1 italic">
+                      &quot;{item.ultimaMensagem}&quot;
                     </p>
                   </div>
                 </div>
@@ -119,25 +121,28 @@ export function EmpresaInboxClient({
         </div>
       </div>
 
-      {/* Coluna da Direita (ChatBox Principal) */}
+      {/* ChatBox */}
       <div className="lg:col-span-8 space-y-4">
         {alunoSelecionado ? (
           <ChatBox
-            key={`${empresaUserId}_${alunoSelecionado.alunoUserId}`}
+            key={`inbox_chat_${empresaUserId}_${alunoSelecionado.alunoUserId || alunoSelecionado.alunoId}`}
             usuarioLogadoId={empresaUserId}
-            destinatarioId={alunoSelecionado.alunoUserId}
+            destinatarioId={alunoSelecionado.alunoUserId || alunoSelecionado.alunoId}
             destinatarioNome={alunoSelecionado.alunoNome}
             destinatarioAvatar={alunoSelecionado.alunoAvatarUrl}
             destinatarioSubtitulo={`${alunoSelecionado.alunoCurso} • RA ${alunoSelecionado.alunoRa}`}
           />
         ) : (
-          <div className="h-[560px] rounded-3xl bg-slate-900/60 border border-slate-800 flex flex-col items-center justify-center p-8 text-center space-y-3">
-            <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
-              <MessageSquare className="w-8 h-8" />
+          <div className="min-h-[300px] sm:min-h-[450px] rounded-2xl npa-card flex flex-col items-center justify-center p-8 text-center space-y-3">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center"
+              style={{ background: "rgba(0,74,48,0.1)", border: "1px solid rgba(0,74,48,0.2)" }}
+            >
+              <MessageSquare className="w-7 h-7 text-npa" />
             </div>
-            <h3 className="text-base font-bold text-white">Selecione uma conversa</h3>
-            <p className="text-xs text-slate-400 max-w-sm">
-              Clique em um aluno na lista ao lado para abrir a conversa ao vivo via Supabase Realtime WebSockets.
+            <h3 className="text-sm font-bold text-head">Selecione uma conversa</h3>
+            <p className="text-xs text-muted max-w-xs">
+              Clique em um aluno na lista para abrir a conversa.
             </p>
           </div>
         )}
