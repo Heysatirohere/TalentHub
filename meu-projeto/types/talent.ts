@@ -54,6 +54,16 @@ export interface IDocumentoSimulado {
   arquivoUrl?: string;
 }
 
+export interface ICandidatura {
+  id: string;
+  alunoId: string;
+  vagaId: string;
+  matchScore: number;
+  status: string;
+  createdAt: string;
+  vaga?: IVaga;
+}
+
 export interface IAluno {
   id: string;
   userId?: string;
@@ -70,11 +80,12 @@ export interface IAluno {
   historicoAcademico: IItemHistorico[];
   experiencias: IExperiencia[];
   packDocumentos: IDocumentoSimulado[];
+  candidaturas?: ICandidatura[];
   createdAt?: string;
   updatedAt?: string;
 }
 
-export type StatusCampanha = "pendente_aprovacao" | "aprovada" | "rejeitada";
+export type StatusCampanha = "aprovada" | "APROVADA";
 
 export interface IVaga {
   id: string;
@@ -87,7 +98,6 @@ export interface IVaga {
   materiasRequeridas: IMateriaRequerida[];
   status: StatusCampanha;
   dataCriacao: string;
-  feedbackMaster?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -98,7 +108,7 @@ export interface IMatchResult {
   historicoScore: number; // Média ponderada do histórico (0 a 100)
   softSkillScore: number;
   softSkillsAtendidasCount: number;
-  softSkillsFaltantes: (keyof ISoftSkills)[];
+  softSkillsFaltantes: string[];
   passouSoftSkills: boolean;
 }
 

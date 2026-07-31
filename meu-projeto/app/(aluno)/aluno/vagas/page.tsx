@@ -166,7 +166,7 @@ export default function StudentVagasPage() {
               placeholder="Buscar por título, empresa…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="npa-input pl-9 w-full"
+              className="npa-input pl-10 w-full"
             />
           </div>
           <div className="relative">

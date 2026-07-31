@@ -103,7 +103,6 @@ export default function CadastroInicialPage() {
         curso,
         semestre,
         idade,
-        avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250`,
         feedbacksProfessores: ["Perfil em processo de validação."],
         softSkills: {
           comunicacao: true,
@@ -124,7 +123,7 @@ export default function CadastroInicialPage() {
       router.push("/aluno");
     } catch {
       setErrorMessage("Erro inesperado durante o cadastro.");
-    } flex-1 {
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -229,7 +228,7 @@ export default function CadastroInicialPage() {
                     placeholder="Ex: Gabriel Silva"
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
-                    className="npa-input pl-9"
+                    className="npa-input pl-10"
                   />
                 </div>
               </div>
@@ -278,7 +277,7 @@ export default function CadastroInicialPage() {
                     placeholder="ex: aluno@fecap.br"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="npa-input pl-9"
+                    className="npa-input pl-10"
                   />
                 </div>
               </div>
@@ -296,7 +295,7 @@ export default function CadastroInicialPage() {
                       placeholder="••••••••"
                       value={senha}
                       onChange={(e) => setSenha(e.target.value)}
-                      className="npa-input pl-9"
+                      className="npa-input pl-10"
                     />
                   </div>
                 </div>
@@ -313,7 +312,7 @@ export default function CadastroInicialPage() {
                       placeholder="••••••••"
                       value={confirmarSenha}
                       onChange={(e) => setConfirmarSenha(e.target.value)}
-                      className="npa-input pl-9"
+                      className="npa-input pl-10"
                     />
                   </div>
                 </div>

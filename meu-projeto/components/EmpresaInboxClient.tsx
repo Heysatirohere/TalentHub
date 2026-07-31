@@ -52,7 +52,7 @@ export function EmpresaInboxClient({
             placeholder="Buscar por aluno, curso, RA..."
             value={buscaQuery}
             onChange={(e) => setBuscaQuery(e.target.value)}
-            className="npa-input pl-9"
+            className="npa-input pl-10"
           />
         </div>
 
@@ -69,7 +69,7 @@ export function EmpresaInboxClient({
           ) : (
             conversasFiltradas.map((item) => {
               const isSelected = alunoSelecionado?.alunoId === item.alunoId;
-              const dataMsg = new Date(item.dataUltimaMensagem);
+              const dataMsg = new Date(item.dataUltimaMensagem || item.ultimaMensagemData || Date.now());
               const horaFormatada = dataMsg.toLocaleTimeString("pt-BR", {
                 hour: "2-digit",
                 minute: "2-digit",

@@ -9,7 +9,8 @@ import {
   IDocumentoSimulado, 
   ISoftSkills, 
   IItemHistorico, 
-  IMatchResult 
+  IMatchResult,
+  ICandidatura
 } from "@/types/talent";
 import { 
   getAlunos, 
@@ -25,6 +26,11 @@ import {
   updateCampanhaStatus as updateVagaStatusService, 
   resetVagas 
 } from "@/services/vagaService";
+import { 
+  getCandidaturasDoAluno, 
+  candidatarAVagaService, 
+  cancelarCandidaturaService 
+} from "@/services/candidaturaService";
 import { getAlunosRanqueadosPorVaga } from "@/services/matchService";
 
 export type UserRole = "aluno" | "master" | "empresa";
@@ -42,9 +48,12 @@ interface TalentContextType {
   adicionarAluno: (aluno: Omit<IAluno, "id" | "avatarUrl" | "experiencias" | "packDocumentos">) => Promise<IAluno>;
   atualizarHistoricoAluno: (alunoId: string, softSkills: ISoftSkills, historicoAcademico: IItemHistorico[]) => Promise<IAluno>;
   adicionarCampanha: (vaga: Omit<IVaga, "id" | "status" | "dataCriacao">) => Promise<IVaga>;
-  alterarStatusCampanha: (vagaId: string, status: StatusCampanha, feedback?: string) => Promise<IVaga>;
+  alterarStatusCampanha: (vagaId: string, status: StatusCampanha) => Promise<IVaga>;
   adicionarExperienciaAluno: (alunoId: string, exp: Omit<IExperiencia, "id">) => Promise<IExperiencia>;
   enviarDocumentoAluno: (alunoId: string, doc: Omit<IDocumentoSimulado, "id" | "dataEnvio" | "status">) => Promise<IDocumentoSimulado>;
+  candidaturas: ICandidatura[];
+  candidatarAVaga: (vagaId: string, matchScore?: number) => Promise<boolean>;
+  cancelarCandidatura: (vagaId: string) => Promise<boolean>;
   fetchRankedAlunosPorVaga: (vagaId: string) => Promise<IMatchResult[]>;
   resetarDados: () => Promise<void>;
 }
@@ -70,19 +79,30 @@ export function TalentProvider({ children }: { children: React.ReactNode }) {
 
   const [alunos, setAlunos] = useState<IAluno[]>([]);
   const [vagas, setVagas] = useState<IVaga[]>([]);
+  const [candidaturas, setCandidaturas] = useState<ICandidatura[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [currentAlunoId, setCurrentAlunoId] = useState<string>("26010001");
+  const LOCAL_STORAGE_KEY_ALUNO_ID = "fecap_talent_aluno_id_v2";
+
+  const [currentAlunoId, setCurrentAlunoId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY_ALUNO_ID);
+        if (saved) return saved;
+      } catch (e) {
+        console.error("Erro ao carregar ID do aluno:", e);
+      }
+    }
+    return "26010001";
+  });
 
   useEffect(() => {
     let isMounted = true;
-
     async function loadInitialData() {
       try {
-        setIsLoading(true);
-        const [loadedAlunos, loadedVagas] = await Promise.all([getAlunos(), getVagas()]);
+        const [alunosData, vagasData] = await Promise.all([getAlunos(), getVagas()]);
         if (isMounted) {
-          setAlunos(loadedAlunos);
-          setVagas(loadedVagas);
+          setAlunos(alunosData);
+          setVagas(vagasData);
         }
       } catch (e) {
         console.error("Erro ao carregar dados dos serviços:", e);
@@ -90,13 +110,67 @@ export function TalentProvider({ children }: { children: React.ReactNode }) {
         if (isMounted) setIsLoading(false);
       }
     }
-
     loadInitialData();
-
     return () => {
       isMounted = false;
     };
   }, []);
+
+  const currentAluno = currentAlunoId
+    ? alunos.find(
+        (a) =>
+          a.ra === currentAlunoId ||
+          a.email === currentAlunoId ||
+          a.id === currentAlunoId ||
+          a.userId === currentAlunoId
+      ) || alunos[0]
+    : alunos[0];
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadCandidaturas() {
+      if (currentAluno?.id) {
+        const data = await getCandidaturasDoAluno(currentAluno.id);
+        if (isMounted) setCandidaturas(data);
+      }
+    }
+    loadCandidaturas();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentAluno?.id]);
+
+  const candidatarAVaga = async (vagaId: string, matchScore: number = 0): Promise<boolean> => {
+    if (!currentAluno) return false;
+    const alunoIdToUse = currentAluno.id || currentAluno.ra;
+    const res = await candidatarAVagaService(alunoIdToUse, vagaId, matchScore);
+    const vagaObj = vagas.find((v) => v.id === vagaId);
+
+    const candidaturaObj: ICandidatura = res || {
+      id: `cand-${Date.now()}`,
+      alunoId: alunoIdToUse,
+      vagaId,
+      matchScore,
+      status: "CANDIDATADO",
+      createdAt: new Date().toISOString(),
+      vaga: vagaObj,
+    };
+
+    setCandidaturas((prev) => {
+      const exists = prev.some((c) => c.vagaId === vagaId);
+      if (exists) return prev.map((c) => (c.vagaId === vagaId ? candidaturaObj : c));
+      return [candidaturaObj, ...prev];
+    });
+    return true;
+  };
+
+  const cancelarCandidatura = async (vagaId: string): Promise<boolean> => {
+    if (!currentAluno) return false;
+    const alunoIdToUse = currentAluno.id || currentAluno.ra;
+    await cancelarCandidaturaService(alunoIdToUse, vagaId);
+    setCandidaturas((prev) => prev.filter((c) => c.vagaId !== vagaId));
+    return true;
+  };
 
   useEffect(() => {
     try {
@@ -106,25 +180,33 @@ export function TalentProvider({ children }: { children: React.ReactNode }) {
     }
   }, [userRole]);
 
-  const currentAluno =
-    alunos.find(
-      (a) =>
-        a.ra === currentAlunoId ||
-        a.email === currentAlunoId ||
-        a.id === currentAlunoId
-    ) || alunos[0];
+  useEffect(() => {
+    try {
+      if (currentAlunoId) {
+        localStorage.setItem(LOCAL_STORAGE_KEY_ALUNO_ID, currentAlunoId);
+      } else {
+        localStorage.removeItem(LOCAL_STORAGE_KEY_ALUNO_ID);
+      }
+    } catch (e) {
+      console.error("Erro ao salvar ID do aluno:", e);
+    }
+  }, [currentAlunoId]);
 
   const loginAs = (role: UserRole, alunoIdOrRa?: string) => {
     setUserRole(role);
     if (role === "aluno") {
-      const searchKey = alunoIdOrRa || "26010001";
-      const alunoAchado = alunos.find(
-        (a) => a.ra === searchKey || a.id === searchKey || a.email === searchKey
-      );
-      if (alunoAchado) {
-        setCurrentAlunoId(alunoAchado.ra || alunoAchado.id);
+      const searchKey = alunoIdOrRa || "";
+      if (searchKey) {
+        const alunoAchado = alunos.find(
+          (a) => a.ra === searchKey || a.id === searchKey || a.email === searchKey || a.userId === searchKey
+        );
+        if (alunoAchado) {
+          setCurrentAlunoId(alunoAchado.ra || alunoAchado.id);
+        } else {
+          setCurrentAlunoId(searchKey);
+        }
       } else {
-        setCurrentAlunoId(searchKey);
+        setCurrentAlunoId("");
       }
     }
   };
@@ -159,10 +241,9 @@ export function TalentProvider({ children }: { children: React.ReactNode }) {
 
   const alterarStatusCampanha = async (
     vagaId: string,
-    status: StatusCampanha,
-    feedbackMaster?: string
+    status: StatusCampanha
   ): Promise<IVaga> => {
-    const vagaAtualizada = await updateVagaStatusService(vagaId, status, feedbackMaster);
+    const vagaAtualizada = await updateVagaStatusService(vagaId, status);
     setVagas((prev) => prev.map((v) => (v.id === vagaId ? vagaAtualizada : v)));
     return vagaAtualizada;
   };
@@ -218,6 +299,9 @@ export function TalentProvider({ children }: { children: React.ReactNode }) {
         alterarStatusCampanha,
         adicionarExperienciaAluno,
         enviarDocumentoAluno,
+        candidaturas,
+        candidatarAVaga,
+        cancelarCandidatura,
         fetchRankedAlunosPorVaga,
         resetarDados,
       }}

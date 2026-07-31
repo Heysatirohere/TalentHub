@@ -229,7 +229,7 @@ export function BancoTalentosClient({
                   placeholder="Ex: Cybersecurity, Lucas, RA..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="npa-input pl-9"
+                  className="npa-input pl-10"
                 />
               </div>
             </div>
@@ -438,12 +438,20 @@ export function BancoTalentosClient({
 
       {/* STUDENT OFFICIAL ACADEMIC TRANSCRIPT DRAWER / MODAL */}
       {selectedAluno && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#004A30]/60 backdrop-blur-sm">
-          <div className="bg-white border border-gray-200 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6 relative shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+          <div
+            className="rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6 relative shadow-2xl border"
+            style={{
+              background: "var(--bg-surface)",
+              borderColor: "var(--border-base)",
+              color: "var(--text-body)",
+            }}
+          >
             
             <button
               onClick={() => setSelectedAluno(null)}
-              className="absolute top-5 right-5 p-2 rounded-full bg-gray-100 text-slate-500 hover:text-slate-800 hover:bg-gray-200 transition-colors"
+              className="absolute top-5 right-5 w-9 h-9 p-0 rounded-full npa-btn-ghost justify-center"
+              aria-label="Fechar"
             >
               <X className="w-5 h-5" />
             </button>
@@ -502,10 +510,10 @@ export function BancoTalentosClient({
                           <td className="p-3 text-center">
                             <span className={`inline-block font-mono font-bold px-2 py-0.5 rounded ${
                               item.nota >= 8.5
-                                ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                                 : item.nota >= 7.0
-                                ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                                : "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                                : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
                             }`}>
                               {item.nota.toFixed(1)}
                             </span>
@@ -523,8 +531,8 @@ export function BancoTalentosClient({
 
             {/* Soft Skills Badges */}
             <div className="space-y-3">
-              <h3 className="text-xs font-bold text-amber-600 uppercase tracking-wider flex items-center space-x-2">
-                <ShieldCheck className="w-4 h-4 text-amber-600" />
+              <h3 className="text-xs font-bold uppercase tracking-wider flex items-center space-x-2" style={{ color: "var(--amber-text)" }}>
+                <ShieldCheck className="w-4 h-4" style={{ color: "var(--amber-text)" }} />
                 <span>Competências Comportamentais (Soft Skills)</span>
               </h3>
               {(() => {
@@ -534,7 +542,7 @@ export function BancoTalentosClient({
 
                 if (softSkillsValidadas.length === 0) {
                   return (
-                    <p className="text-xs text-slate-400 italic">
+                    <p className="text-xs text-muted italic">
                       Nenhuma competência comportamental mapeada ainda.
                     </p>
                   );
@@ -549,14 +557,18 @@ export function BancoTalentosClient({
                       return (
                         <div
                           key={progresso.id || progresso.trilhaNome}
-                          className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center space-x-2 ${
+                          className="px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center space-x-2"
+                          style={
                             isValidated
-                              ? "bg-amber-50 border-amber-200 text-amber-700"
-                              : "bg-[#004A30]/8 border-[#004A30]/20 text-[#004A30]"
-                          }`}
+                              ? { background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber-text)" }
+                              : { background: "rgba(0,74,48,0.1)", borderColor: "rgba(0,74,48,0.25)", color: "var(--npa-green)" }
+                          }
                         >
                           <span>{nomeTrilha}</span>
-                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-white border border-current">
+                          <span
+                            className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border"
+                            style={{ background: "var(--bg-surface)", borderColor: "var(--border-base)" }}
+                          >
                             ✓ {isValidated ? "VALIDADO" : "APROVADO"}
                           </span>
                         </div>
@@ -593,13 +605,13 @@ export function BancoTalentosClient({
 
             {/* Teacher Feedback */}
             <div className="space-y-3">
-              <h3 className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center space-x-2">
-                <MessageSquare className="w-4 h-4 text-slate-500" />
+              <h3 className="text-xs font-bold text-muted uppercase tracking-wider flex items-center space-x-2">
+                <MessageSquare className="w-4 h-4 text-muted" />
                 <span>Feedbacks dos Professores FECAP</span>
               </h3>
               <div className="space-y-2">
                 {selectedAluno.feedbacksProfessores.map((fb, idx) => (
-                  <div key={idx} className="p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs italic text-slate-600">
+                  <div key={idx} className="p-3 rounded-xl text-xs italic text-body" style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-light)' }}>
                     &quot;{fb}&quot;
                   </div>
                 ))}

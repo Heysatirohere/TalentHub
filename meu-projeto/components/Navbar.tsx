@@ -80,7 +80,7 @@ export function Navbar() {
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#004A30] bg-[#00FF55] hover:bg-[#33ff77] shadow-sm transition-all"
             >
               <LogIn className="w-3.5 h-3.5" />
-              <span className="capitalize">{userRole !== "visitante" ? `Perfil: ${userRole}` : "Entrar"}</span>
+              <span className="capitalize">{(userRole as string) !== "visitante" ? `Perfil: ${userRole}` : "Entrar"}</span>
             </Link>
 
             <button

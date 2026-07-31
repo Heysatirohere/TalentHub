@@ -47,53 +47,54 @@ export default async function TalentoDetalhesPage({
   const alunoUserId = aluno.userId || aluno.id;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8 space-y-8">
+    <div className="min-h-screen p-4 sm:p-6 lg:p-8 space-y-8" style={{ background: "var(--bg-base)", color: "var(--text-body)" }}>
       {/* Top Breadcrumb / Back Link */}
       <div className="flex items-center justify-between">
         <Link
           href="/empresa/banco-talentos"
-          className="inline-flex items-center space-x-2 text-xs font-bold text-slate-400 hover:text-cyan-400 transition-colors bg-slate-900 border border-slate-800 px-3.5 py-2 rounded-xl"
+          className="inline-flex items-center space-x-2 text-xs font-bold npa-btn-ghost px-3.5 py-2 rounded-xl"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Voltar ao Banco de Talentos</span>
         </Link>
-        <span className="text-xs text-slate-500 font-mono">ID Talento: {aluno.id}</span>
+        <span className="text-xs text-muted font-mono">ID Talento: {aluno.id}</span>
       </div>
 
       {/* Header Profile Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyan-950/40 border border-slate-800 p-6 sm:p-8 shadow-2xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+      <div className="relative overflow-hidden rounded-3xl npa-card p-6 sm:p-8 shadow-2xl">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#00FF55]/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-start sm:items-center space-x-5">
             <img
               src={aluno.avatarUrl}
               alt={aluno.nome}
-              className="w-20 h-20 rounded-2xl object-cover border-2 border-cyan-500/50 shadow-xl shadow-cyan-500/10 shrink-0"
+              className="w-20 h-20 rounded-2xl object-cover border-2 shrink-0"
+              style={{ borderColor: "var(--border-strong)" }}
             />
             <div className="space-y-1">
-              <div className="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[11px] font-bold uppercase">
+              <div className="npa-badge inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase">
                 <GraduationCap className="w-3.5 h-3.5" />
                 <span>Estudante FECAP</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white">{aluno.nome}</h1>
-              <p className="text-xs text-slate-400 flex items-center space-x-2">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-head">{aluno.nome}</h1>
+              <p className="text-xs text-muted flex items-center space-x-2">
                 <span>{aluno.curso}</span>
                 <span>•</span>
                 <span>{aluno.semestre}º Semestre</span>
                 <span>•</span>
-                <span className="font-mono text-slate-300">RA: {aluno.ra}</span>
+                <span className="font-mono text-head">RA: {aluno.ra}</span>
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-3 bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4 shrink-0 backdrop-blur-md">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5 text-emerald-400" />
+          <div className="flex items-center space-x-3 p-4 rounded-2xl border shrink-0 backdrop-blur-md" style={{ background: "var(--bg-raised)", borderColor: "var(--border-light)" }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(0,74,48,0.1)", border: "1px solid rgba(0,74,48,0.2)" }}>
+              <ShieldCheck className="w-5 h-5 text-npa" />
             </div>
             <div>
-              <span className="block text-xs font-bold text-slate-400 uppercase">Status FECAP</span>
-              <span className="text-xs font-extrabold text-emerald-400">Perfil Verificado</span>
+              <span className="block text-xs font-bold text-muted uppercase">Status FECAP</span>
+              <span className="text-xs font-extrabold text-npa">Perfil Verificado</span>
             </div>
           </div>
         </div>
@@ -103,83 +104,111 @@ export default async function TalentoDetalhesPage({
         {/* Left Column: Academic Info & Soft Skills */}
         <div className="lg:col-span-7 space-y-6">
           {/* Soft Skills Section */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 space-y-4">
-            <h2 className="text-base font-bold text-white flex items-center space-x-2">
-              <Award className="w-5 h-5 text-amber-400" />
+          <div className="npa-card rounded-3xl p-6 space-y-4">
+            <h2 className="text-base font-bold text-head flex items-center space-x-2">
+              <Award className="w-5 h-5" style={{ color: "var(--amber-text)" }} />
               <span>Competências Comportamentais & Trilhas</span>
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {aluno.progressosTrilha && aluno.progressosTrilha.length > 0 ? (
-                aluno.progressosTrilha.map((prog) => {
-                  const isValidated = prog.status === "VALIDADO_MENTORIA";
-                  const isTestApp = prog.status === "TESTE_APROVADO";
+            {(() => {
+              const validProgressos = (aluno.progressosTrilha || []).filter(
+                (p) => p.status === "VALIDADO_MENTORIA" || p.status === "TESTE_APROVADO"
+              );
 
-                  return (
-                    <div
-                      key={prog.trilhaNome}
-                      className={`p-3.5 rounded-2xl border flex flex-col justify-between space-y-2 ${
-                        isValidated
-                          ? "bg-amber-500/10 border-amber-500/40 text-amber-200"
-                          : isTestApp
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-200"
-                          : "bg-slate-950 border-slate-800 text-slate-400"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs">{prog.trilhaNome}</span>
-                        {isValidated ? (
-                          <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                        ) : isTestApp ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                        ) : null}
+              if (validProgressos.length === 0) {
+                return (
+                  <p className="text-xs text-muted italic">
+                    Nenhuma soft skill validada até o momento.
+                  </p>
+                );
+              }
+
+              return (
+                <div className="flex flex-wrap gap-2">
+                  {validProgressos.map((prog, idx) => {
+                    const isValidated = prog.status === "VALIDADO_MENTORIA";
+                    const nomeTrilha = (prog as any).trilha?.nome || prog.trilhaNome || "Soft Skill";
+
+                    return (
+                      <div
+                        key={idx}
+                        className="p-3 rounded-xl border text-xs font-semibold flex items-center space-x-2"
+                        style={
+                          isValidated
+                            ? { background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber-text)" }
+                            : { background: "rgba(0,74,48,0.1)", borderColor: "rgba(0,74,48,0.25)", color: "var(--npa-green)" }
+                        }
+                      >
+                        <span>{nomeTrilha}</span>
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-base)" }}>
+                          {isValidated ? "✓ VALIDADO" : "✓ APROVADO"}
+                        </span>
                       </div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider">
-                        {isValidated
-                          ? "Chancela FECAP: Validado"
-                          : isTestApp
-                          ? "Teste Aprovado"
-                          : "Em Trilha"}
-                      </span>
-                    </div>
-                  );
-                })
-              ) : (
-                <p className="text-xs text-slate-500 col-span-2">
-                  Trilhas em mapeamento inicial.
-                </p>
-              )}
-            </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Histórico Acadêmico Section */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 space-y-4">
-            <h2 className="text-base font-bold text-white flex items-center space-x-2">
-              <BookOpen className="w-5 h-5 text-cyan-400" />
-              <span>Desempenho Acadêmico Exemplo</span>
+          <div className="npa-card rounded-3xl p-6 space-y-4">
+            <h2 className="text-base font-bold text-head flex items-center space-x-2">
+              <BookOpen className="w-5 h-5 text-npa" />
+              <span>Desempenho Acadêmico Validado FECAP</span>
             </h2>
 
-            <div className="space-y-2">
-              {aluno.historicoAcademico?.map((item) => (
-                <div
-                  key={item.materia}
-                  className="flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs"
-                >
-                  <span className="font-medium text-slate-300">{item.materia}</span>
-                  <span className="font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
-                    Nota: {item.nota.toFixed(1)}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {!aluno.historicoAcademico || aluno.historicoAcademico.length === 0 ? (
+              <p className="text-xs text-muted italic">Histórico acadêmico não importado.</p>
+            ) : (
+              <div className="space-y-2">
+                {aluno.historicoAcademico.map((item) => (
+                  <div
+                    key={item.materia}
+                    className="flex items-center justify-between p-3 rounded-xl border text-xs"
+                    style={{ background: "var(--bg-raised)", borderColor: "var(--border-light)" }}
+                  >
+                    <span className="font-medium text-head">{item.materia}</span>
+                    <span className="font-mono font-bold text-npa bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                      Nota: {item.nota.toFixed(1)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Experiências Profissionais Section */}
+          <div className="npa-card rounded-3xl p-6 space-y-4">
+            <h2 className="text-base font-bold text-head flex items-center space-x-2">
+              <Briefcase className="w-5 h-5 text-npa" />
+              <span>Histórico de Experiências</span>
+            </h2>
+
+            {!aluno.experiencias || aluno.experiencias.length === 0 ? (
+              <p className="text-xs text-muted italic">Nenhuma experiência profissional cadastrada.</p>
+            ) : (
+              <div className="space-y-2">
+                {aluno.experiencias.map((exp) => (
+                  <div key={exp.id} className="p-3 rounded-xl border text-xs space-y-1" style={{ background: "var(--bg-raised)", borderColor: "var(--border-light)" }}>
+                    <div className="flex justify-between font-bold text-head">
+                      <span>{exp.cargo}</span>
+                      <span className="text-npa text-[10px]">{exp.periodo}</span>
+                    </div>
+                    <p className="text-npa font-semibold">{exp.empresa}</p>
+                    <p className="text-muted">{exp.descricao}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Right Column: Realtime Chat Section ("Falar com o Talento") */}
         <div className="lg:col-span-5 space-y-4">
           <div className="flex items-center space-x-2">
-            <MessageSquare className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-base font-bold text-white">Falar com o Talento</h2>
+            <MessageSquare className="w-5 h-5 text-npa" />
+            <h2 className="text-base font-bold text-head">Falar com o Talento</h2>
           </div>
 
           {/* Realtime ChatBox Component */}

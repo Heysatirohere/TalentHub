@@ -16,10 +16,14 @@ export default function FiltragemTalentosEmpresaPage() {
   const { alunos, vagas } = useTalent();
 
   const vagasAprovadas = useMemo(() => {
-    return vagas.filter((v) => v.status === "aprovada");
+    if (!vagas || vagas.length === 0) return [];
+    const filtered = vagas.filter(
+      (v) => v.status === "aprovada" || (v.status as string)?.toUpperCase() === "APROVADA"
+    );
+    return filtered.length > 0 ? filtered : vagas;
   }, [vagas]);
 
-  const [selectedVagaId, setSelectedVagaId] = useState<string>(vagasAprovadas[0]?.id || "");
+  const [selectedVagaId, setSelectedVagaId] = useState<string>("");
   const [selectedMatch, setSelectedMatch] = useState<MatchResult | null>(null);
   const [chatAluno, setChatAluno] = useState<Aluno | null>(null);
 
@@ -29,7 +33,17 @@ export default function FiltragemTalentosEmpresaPage() {
   const [minMatchScore, setMinMatchScore] = useState(0);
 
   const currentVaga = useMemo(() => {
-    return vagasAprovadas.find((v) => v.id === selectedVagaId) || vagasAprovadas[0];
+    if (selectedVagaId) {
+      const found = vagasAprovadas.find((v) => v.id === selectedVagaId);
+      if (found) return found;
+    }
+    return vagasAprovadas[0] || vagas[0];
+  }, [vagasAprovadas, vagas, selectedVagaId]);
+
+  React.useEffect(() => {
+    if (!selectedVagaId && vagasAprovadas.length > 0) {
+      setSelectedVagaId(vagasAprovadas[0].id);
+    }
   }, [vagasAprovadas, selectedVagaId]);
 
   const rankedMatches = useMemo(() => {
@@ -140,7 +154,7 @@ export default function FiltragemTalentosEmpresaPage() {
                   placeholder="Nome, RA, curso..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="npa-input pl-9"
+                  className="npa-input pl-10"
                 />
               </div>
 

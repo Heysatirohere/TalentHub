@@ -330,14 +330,18 @@ export default function RecruiterDashboardPage() {
                         </p>
 
                         {/* Warning if missing soft skills */}
-                        {!passouSoftSkills && softSkillsFaltantes.length > 0 && (
-                          <p className="text-[11px] text-rose-400 font-medium mt-1 flex items-center space-x-1">
-                            <span>⚠ Falta soft skill:</span>
-                            <span className="font-semibold">
-                              {softSkillsFaltantes.map((s) => SOFT_SKILLS_LABELS[s]).join(", ")}
-                            </span>
-                          </p>
-                        )}
+                        {(() => {
+                          const missingItems = (softSkillsFaltantes || []).filter(Boolean);
+                          if (missingItems.length === 0) return null;
+                          return (
+                            <p className="text-[11px] text-rose-400 font-medium mt-1 flex items-center space-x-1">
+                              <span>⚠ Falta:</span>
+                              <span className="font-semibold">
+                                {missingItems.join(", ")}
+                              </span>
+                            </p>
+                          );
+                        })()}
                       </div>
                     </div>
 
@@ -409,39 +413,44 @@ export default function RecruiterDashboardPage() {
                 <span>Avaliação de Soft Skills (Requisitos da Vaga)</span>
               </h3>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {(Object.keys(SOFT_SKILLS_LABELS) as (keyof typeof SOFT_SKILLS_LABELS)[]).map((key) => {
-                  const isRequired = currentVaga.requisitosSoftSkills.includes(key);
-                  const hasSkill = Boolean(selectedMatch.aluno.softSkills?.[key] || selectedMatch.aluno.progressosTrilha?.some(p => p.trilhaNome.toLowerCase() === key.toLowerCase() && p.status !== "EM_TRILHA"));
+              {(() => {
+                const validProgressos = (selectedMatch.aluno.progressosTrilha || []).filter(
+                  (p) => p.status === "VALIDADO_MENTORIA" || p.status === "TESTE_APROVADO"
+                );
 
+                if (validProgressos.length === 0) {
                   return (
-                    <div
-                      key={key}
-                      className={`p-3 rounded-xl border flex items-center justify-between text-xs font-medium ${
-                        hasSkill
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                          : isRequired
-                          ? "bg-rose-500/10 border-rose-500/40 text-rose-300 font-bold"
-                          : "bg-slate-950 border-slate-800 text-slate-500"
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2">
-                        {hasSkill ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-rose-400" />
-                        )}
-                        <span>{SOFT_SKILLS_LABELS[key]}</span>
-                      </div>
-                      {isRequired && (
-                        <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-900 text-amber-300 border border-amber-500/20">
-                          Requerida
-                        </span>
-                      )}
-                    </div>
+                    <p className="text-xs text-slate-500 italic">
+                      Nenhuma soft skill validada até o momento.
+                    </p>
                   );
-                })}
-              </div>
+                }
+
+                return (
+                  <div className="flex flex-wrap gap-2">
+                    {validProgressos.map((prog, idx) => {
+                      const isValidated = prog.status === "VALIDADO_MENTORIA";
+                      const nomeTrilha = (prog as any).trilha?.nome || prog.trilhaNome || "Soft Skill";
+
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center space-x-2 ${
+                            isValidated
+                              ? "bg-amber-500/10 border-amber-500/40 text-amber-300"
+                              : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                          }`}
+                        >
+                          <span>{nomeTrilha}</span>
+                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-950/60 border border-current">
+                            {isValidated ? "✓ VALIDADO" : "✓ APROVADO"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Histórico Acadêmico Validado */}
@@ -451,34 +460,38 @@ export default function RecruiterDashboardPage() {
                 <span>Boletim do Histórico Escolar (Notas Validadas FECAP)</span>
               </h3>
               <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-900 text-slate-400 font-semibold uppercase text-[10px] border-b border-slate-800">
-                    <tr>
-                      <th className="p-3">Matéria / Disciplina</th>
-                      <th className="p-3">Semestre</th>
-                      <th className="p-3 text-center">Nota (0 a 10)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                    {selectedMatch.aluno.historicoAcademico?.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-slate-900/50">
-                        <td className="p-3 font-semibold text-white">{item.materia}</td>
-                        <td className="p-3 font-mono text-slate-400">{item.semestre}</td>
-                        <td className="p-3 text-center">
-                          <span className={`inline-block font-mono font-bold px-2 py-0.5 rounded ${
-                            item.nota >= 8.5
-                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                              : item.nota >= 7.0
-                              ? "bg-blue-500/20 text-blue-300 border border-blue-500/40"
-                              : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                          }`}>
-                            {item.nota.toFixed(1)}
-                          </span>
-                        </td>
+                {!selectedMatch.aluno.historicoAcademico || selectedMatch.aluno.historicoAcademico.length === 0 ? (
+                  <p className="text-xs text-slate-500 italic p-4 text-center">Histórico acadêmico não importado.</p>
+                ) : (
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-900 text-slate-400 font-semibold uppercase text-[10px] border-b border-slate-800">
+                      <tr>
+                        <th className="p-3">Matéria / Disciplina</th>
+                        <th className="p-3">Semestre</th>
+                        <th className="p-3 text-center">Nota (0 a 10)</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                      {selectedMatch.aluno.historicoAcademico.map((item, idx) => (
+                        <tr key={idx} className="hover:bg-slate-900/50">
+                          <td className="p-3 font-semibold text-white">{item.materia}</td>
+                          <td className="p-3 font-mono text-slate-400">{item.semestre}</td>
+                          <td className="p-3 text-center">
+                            <span className={`inline-block font-mono font-bold px-2 py-0.5 rounded ${
+                              item.nota >= 8.5
+                                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                                : item.nota >= 7.0
+                                ? "bg-blue-500/20 text-blue-300 border border-blue-500/40"
+                                : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                            }`}>
+                              {item.nota.toFixed(1)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
 
@@ -510,9 +523,11 @@ export default function RecruiterDashboardPage() {
 
               <button
                 onClick={() => {
-                  const target = selectedMatch.aluno;
-                  setSelectedMatch(null);
-                  setChatAluno(target);
+                  if (selectedMatch?.aluno) {
+                    const target = { ...selectedMatch.aluno };
+                    setSelectedMatch(null);
+                    setChatAluno(target);
+                  }
                 }}
                 className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-bold text-xs flex items-center space-x-2 shadow-lg shadow-cyan-500/20"
               >

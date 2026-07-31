@@ -282,7 +282,7 @@ function LoginFormContent() {
                     placeholder="aluno1@fecap.br"
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    className="npa-input pl-9"
+                    className="npa-input pl-10"
                   />
                 </div>
               </div>
@@ -305,7 +305,7 @@ function LoginFormContent() {
                     placeholder="••••••••"
                     value={senhaInput}
                     onChange={(e) => setSenhaInput(e.target.value)}
-                    className="npa-input pl-9"
+                    className="npa-input pl-10"
                   />
                 </div>
               </div>

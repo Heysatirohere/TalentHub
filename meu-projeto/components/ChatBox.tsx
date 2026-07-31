@@ -14,8 +14,8 @@ import { supabase } from "@/lib/supabaseClient";
 import {
   getHistoricoMensagens,
   enviarMensagemAction,
+  IMensagemChat,
 } from "@/services/chatService";
-import { IMensagemChat } from "@/types/chat";
 
 interface ChatBoxProps {
   usuarioLogadoId: string;
