@@ -72,6 +72,7 @@ model Aluno {
   experiencias       Experiencia[]
   packDocumentos     DocumentoSimulado[]
   progressosTrilha   ProgressoAlunoTrilha[]
+  candidaturas       Candidatura[]
 
   @@map("alunos")
 }
@@ -141,15 +142,29 @@ model Vaga {
   tipoContrato         String
   descricao            String
   requisitosSoftSkills String[]       @default([])
-  status               StatusCampanha @default(PENDENTE_APROVACAO)
+  status               StatusCampanha @default(APROVADA)
   dataCriacao          String
-  feedbackMaster       String?
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
 
   materiasRequeridas MateriaRequerida[]
+  candidaturas       Candidatura[]
 
   @@map("vagas")
+}
+
+model Candidatura {
+  id         String   @id @default(uuid())
+  alunoId    String
+  aluno      Aluno    @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  vagaId     String
+  vaga       Vaga     @relation(fields: [vagaId], references: [id], onDelete: Cascade)
+  matchScore Int      @default(0)
+  status     String   @default("CANDIDATADO")
+  createdAt  DateTime @default(now())
+
+  @@unique([alunoId, vagaId])
+  @@map("candidaturas")
 }
 
 model MateriaRequerida {

@@ -1,45 +1,46 @@
-import { Aluno, Vaga, MatchResult, SoftSkills } from "@/types/talent";
+import { Aluno, Vaga, MatchResult, SOFT_SKILLS_LABELS } from "@/types/talent";
 
 /**
- * Algoritmo de Match entre Aluno FECAP e Vaga de Recrutamento.
+ * Algoritmo de Match Ponderado entre Aluno e Vaga FECAP (60% Hard / 40% Soft).
  *
- * 1. Soft Skills: Validação das habilidades comportamentais requeridas.
- * 2. Histórico Acadêmico: Média ponderada entre notas de 0 a 10 do aluno e o peso (1-5) exigido pela vaga.
+ * 1. Extração Segura das Soft Skills do Aluno:
+ *    Filtra apenas trilhas com status VALIDADO_MENTORIA ou TESTE_APROVADO.
+ *
+ * 2. Cálculo Ponderado:
+ *    - Score Hard (60%): Porcentagem ponderada pelas notas do histórico acadêmico.
+ *    - Score Soft (40%): Porcentagem de soft skills exigidas pela vaga que o aluno possui.
+ *    - Se a vaga NÃO exigir Soft Skills, Score Hard vale 100%.
+ *
+ * 3. Faltas (Missing Items):
+ *    Combina soft skills faltantes (com sufixo "(Soft Skill)") e matérias não cursadas ou nota < 7.0 (com sufixo "(Matéria)").
  */
 export function calculateMatchScore(aluno: Aluno, vaga: Vaga): MatchResult {
-  const reqSofts = vaga.requisitosSoftSkills || [];
-  const softsFaltantes: (keyof SoftSkills)[] = [];
-  let softsAtendidas = 0;
-  let mentoriaValidadaCount = 0;
+  // 1. Extração Segura das Soft Skills do Aluno
+  const alunoSoftSkills: string[] = [];
 
-  for (const softKey of reqSofts) {
-    const keyStr = String(softKey).toLowerCase();
-    const progresso = aluno.progressosTrilha?.find(
-      (p) => p.trilhaNome.toLowerCase() === keyStr || p.trilhaId?.toLowerCase() === keyStr
-    );
-
-    if (progresso) {
-      if (progresso.status === "VALIDADO_MENTORIA") {
-        softsAtendidas++;
-        mentoriaValidadaCount++;
-      } else if (progresso.status === "TESTE_APROVADO") {
-        softsAtendidas++;
-      } else {
-        softsFaltantes.push(softKey);
-      }
-    } else if (aluno.softSkills && aluno.softSkills[softKey]) {
-      softsAtendidas++;
-    } else {
-      softsFaltantes.push(softKey);
-    }
+  if (Array.isArray(aluno.progressosTrilha)) {
+    aluno.progressosTrilha
+      .filter((p) => p.status === "VALIDADO_MENTORIA" || p.status === "TESTE_APROVADO")
+      .forEach((p) => {
+        const nome = (p.trilhaNome || (p as any).trilha?.nome || p.trilhaId || "").toLowerCase().trim();
+        if (nome) alunoSoftSkills.push(nome);
+      });
   }
 
-  const passouSoftSkills = softsFaltantes.length === 0;
-  const softRatio = reqSofts.length > 0 ? softsAtendidas / reqSofts.length : 1;
+  if (aluno.softSkills) {
+    Object.entries(aluno.softSkills).forEach(([key, val]) => {
+      if (val) {
+        alunoSoftSkills.push(key.toLowerCase().trim());
+        const label = SOFT_SKILLS_LABELS[key as keyof typeof SOFT_SKILLS_LABELS];
+        if (label) alunoSoftSkills.push(label.toLowerCase().trim());
+      }
+    });
+  }
 
-  // Cálculo da Média Ponderada das Matérias Requeridas
+  // 2. Cálculo do Score Hard (60%) & Faltas Hard
   let somaPonderada = 0;
   let somaPesos = 0;
+  const faltasHard: string[] = [];
 
   const materiasReq = vaga.materiasRequeridas || [];
 
@@ -48,43 +49,73 @@ export function calculateMatchScore(aluno: Aluno, vaga: Vaga): MatchResult {
     const reqNomeNorm = req.nomeDaMateria.toLowerCase().trim();
 
     const itemHistorico = aluno.historicoAcademico?.find(
-      (h) => h.materia.toLowerCase().trim() === reqNomeNorm || h.materia.toLowerCase().includes(reqNomeNorm) || reqNomeNorm.includes(h.materia.toLowerCase())
+      (h) =>
+        h.materia.toLowerCase().trim() === reqNomeNorm ||
+        h.materia.toLowerCase().includes(reqNomeNorm) ||
+        reqNomeNorm.includes(h.materia.toLowerCase().trim())
     );
 
     const nota = itemHistorico ? itemHistorico.nota : 0;
-    const notaEmEscala100 = nota * 10;
+    if (!itemHistorico || nota < 7.0) {
+      faltasHard.push(`${req.nomeDaMateria} (Matéria)`);
+    }
 
+    const notaEmEscala100 = nota * 10;
     somaPonderada += notaEmEscala100 * peso;
     somaPesos += peso;
   }
 
-  const historicoScore = somaPesos > 0 ? Math.round(somaPonderada / somaPesos) : 0;
-  const softSkillScore = Math.round(softRatio * 100);
+  const hardScore = somaPesos > 0 ? somaPonderada / somaPesos : 100;
 
-  // Multiplicador (Peso extra) por chancela de mentoria validada pela coordenação (Hub Master)
-  const multiplicadorMentoria = 1 + (mentoriaValidadaCount * 0.15);
+  // 3. Cálculo do Score Soft (40%) & Faltas Soft
+  const reqSofts = (vaga.requisitosSoftSkills || []).filter(Boolean);
+  const faltasSoft: string[] = [];
+  let softsAtendidas = 0;
 
-  let scoreFinal = historicoScore;
-  if (!passouSoftSkills) {
-    const fatorPenalizacao = 0.35 + 0.25 * softRatio;
-    scoreFinal = Math.round(historicoScore * fatorPenalizacao * multiplicadorMentoria);
-  } else {
-    scoreFinal = Math.round(historicoScore * multiplicadorMentoria);
+  for (const softKey of reqSofts) {
+    const rawStr = String(softKey).trim();
+    const keyLower = rawStr.toLowerCase();
+    const label = SOFT_SKILLS_LABELS[softKey as keyof typeof SOFT_SKILLS_LABELS] || rawStr;
+    const labelLower = label.toLowerCase().trim();
+
+    const hasSkill = alunoSoftSkills.some(
+      (s) => s === keyLower || s === labelLower || s.includes(keyLower) || keyLower.includes(s)
+    );
+
+    if (hasSkill) {
+      softsAtendidas++;
+    } else {
+      faltasSoft.push(`${label} (Soft Skill)`);
+    }
   }
+
+  const softScore = reqSofts.length > 0 ? (softsAtendidas / reqSofts.length) * 100 : 100;
+
+  // 4. Match Final (Ponderação 60% / 40%)
+  let scoreFinal = 0;
+  if (reqSofts.length === 0) {
+    scoreFinal = Math.round(hardScore);
+  } else {
+    scoreFinal = Math.round((hardScore * 0.60) + (softScore * 0.40));
+  }
+
+  const allFaltantes = [...faltasSoft, ...faltasHard].filter(Boolean);
 
   return {
     aluno,
     scoreFinal: Math.max(0, Math.min(100, scoreFinal)),
-    historicoScore,
-    softSkillScore,
+    historicoScore: Math.round(hardScore),
+    softSkillScore: Math.round(softScore),
     softSkillsAtendidasCount: softsAtendidas,
-    softSkillsFaltantes: softsFaltantes,
-    passouSoftSkills,
+    softSkillsFaltantes: allFaltantes,
+    passouSoftSkills: faltasSoft.length === 0,
   };
 }
 
 export function rankAlunosParaVaga(alunos: Aluno[], vaga: Vaga): MatchResult[] {
-  return alunos
+  const validAlunos = (alunos || []).filter((a) => a && a.nome && a.nome.trim() !== "");
+
+  return validAlunos
     .map((aluno) => calculateMatchScore(aluno, vaga))
     .sort((a, b) => b.scoreFinal - a.scoreFinal);
 }

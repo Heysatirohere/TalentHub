@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/authGuard";
 
 export interface IMensagemChat {
   id: string;
@@ -57,6 +58,7 @@ export async function getHistoricoMensagens(
   remetenteId: string,
   destinatarioId: string
 ): Promise<IMensagemChat[]> {
+  await requireAuth(["ALUNO", "EMPRESA", "MASTER"]);
   const session = await getAuthenticatedUserSession();
   if (!session) {
     console.warn("Segurança: tentativa de acesso ao histórico sem cookie válido.");
@@ -118,6 +120,7 @@ export async function enviarMensagemAction(
   destinatarioId: string,
   conteudo: string
 ) {
+  await requireAuth(["ALUNO", "EMPRESA", "MASTER"]);
   console.log("Tentando enviar:", { remetenteId, destinatarioId, conteudo });
 
   if (!remetenteId || !remetenteId.trim() || remetenteId === "undefined" || remetenteId === "null") {
@@ -137,9 +140,6 @@ export async function enviarMensagemAction(
   try {
     const { prisma } = await import("@/lib/prisma");
 
-    let finalDestinatarioId = destinatarioId.trim();
-    let finalRemetenteId = remetenteId.trim();
-
     // Helper para garantir e resolver um User ID válido no banco para foreign key
     async function resolveValidUserId(idOrKey: string, defaultRole: "EMPRESA" | "ALUNO" = "ALUNO"): Promise<string> {
       const cleanKey = idOrKey.trim();
@@ -156,19 +156,7 @@ export async function enviarMensagemAction(
       });
       if (emailUser) return emailUser.id;
 
-      // 3. Se for uma empresa (chave contém "empresa" ou defaultRole é EMPRESA)
-      if (cleanKey.toLowerCase().includes("empresa") || defaultRole === "EMPRESA") {
-        const empUser = await prisma.user.findFirst({
-          where: { role: "EMPRESA" },
-        });
-        if (empUser) return empUser.id;
-
-        const empPerfil = await prisma.empresa.findFirst({ include: { user: true } });
-        if (empPerfil?.userId) return empPerfil.userId;
-        if (empPerfil?.user?.id) return empPerfil.user.id;
-      }
-
-      // 4. Busca por Aluno (id, ra, email ou userId)
+      // 3. Busca por Aluno (id, ra, email ou userId)
       const alunoMatch = await prisma.aluno.findFirst({
         where: {
           OR: [
@@ -181,11 +169,14 @@ export async function enviarMensagemAction(
         include: { user: true },
       });
 
-      if (alunoMatch?.userId) return alunoMatch.userId;
-      if (alunoMatch?.user?.id) return alunoMatch.user.id;
-
-      // 5. Se o aluno existe mas não possui User vinculado no banco, cria o User transparente
       if (alunoMatch) {
+        if (alunoMatch.userId) {
+          const userObj = await prisma.user.findUnique({ where: { id: alunoMatch.userId } });
+          if (userObj) return userObj.id;
+        }
+        if (alunoMatch.user?.id) return alunoMatch.user.id;
+
+        // Se o aluno existe mas não possui User válido vinculado no banco, cria o User transparente
         const newStudentUser = await prisma.user.create({
           data: {
             email: alunoMatch.email || `${cleanKey.toLowerCase()}@aluno.fecap.br`,
@@ -200,28 +191,50 @@ export async function enviarMensagemAction(
         return newStudentUser.id;
       }
 
-      // 6. Fallback final para a role
-      const fallbackUser = await prisma.user.findFirst({
+      // 4. Busca por Empresa (id ou userId)
+      const empresaMatch = await prisma.empresa.findFirst({
+        where: {
+          OR: [{ id: cleanKey }, { userId: cleanKey }],
+        },
+        include: { user: true },
+      });
+
+      if (empresaMatch) {
+        if (empresaMatch.userId) {
+          const empUserObj = await prisma.user.findUnique({ where: { id: empresaMatch.userId } });
+          if (empUserObj) return empUserObj.id;
+        }
+        if (empresaMatch.user?.id) return empresaMatch.user.id;
+      }
+
+      // 5. Se for uma empresa (chave contém "empresa" ou defaultRole é EMPRESA)
+      if (cleanKey.toLowerCase().includes("empresa") || defaultRole === "EMPRESA") {
+        const empUser = await prisma.user.findFirst({
+          where: { role: "EMPRESA" },
+        });
+        if (empUser) return empUser.id;
+      }
+
+      // 6. Fallback final para a role solicitada ou primeiro User
+      const fallbackUser = (await prisma.user.findFirst({
         where: { role: defaultRole },
-      }) || await prisma.user.findFirst();
+      })) || (await prisma.user.findFirst());
 
       if (fallbackUser) return fallbackUser.id;
 
       return cleanKey;
     }
 
-    if ("user" in prisma) {
-      finalRemetenteId = await resolveValidUserId(
-        remetenteId,
-        remetenteId.toLowerCase().includes("empresa") ? "EMPRESA" : "ALUNO"
-      );
-      finalDestinatarioId = await resolveValidUserId(
-        destinatarioId,
-        destinatarioId.toLowerCase().includes("empresa") ? "EMPRESA" : "ALUNO"
-      );
-    }
+    const finalRemetenteId = await resolveValidUserId(
+      remetenteId,
+      remetenteId.toLowerCase().includes("empresa") ? "EMPRESA" : "ALUNO"
+    );
+    const finalDestinatarioId = await resolveValidUserId(
+      destinatarioId,
+      destinatarioId.toLowerCase().includes("empresa") ? "EMPRESA" : "ALUNO"
+    );
 
-    // 2. Persistência da Mensagem no Prisma
+    // Persistência da Mensagem no Prisma
     if ("mensagem" in prisma && (prisma as any).mensagem) {
       const novaMensagem = await (prisma as any).mensagem.create({
         data: {
@@ -232,11 +245,8 @@ export async function enviarMensagemAction(
         },
       });
 
-      // Limpa agressivamente o cache de Server Components do Next.js para atualizar o Inbox em tempo real
       try {
         revalidatePath("/", "layout");
-        revalidatePath("/empresa/mensagens");
-        revalidatePath("/aluno/mensagens");
       } catch (e) {
         console.warn("Erro ao revalidar caminhos no Next.js:", e);
       }
@@ -273,26 +283,33 @@ export interface IConversaAtiva {
   alunoAvatarUrl: string;
   ultimaMensagem: string;
   ultimaMensagemData: string;
+  dataUltimaMensagem?: string;
   naoLidasCount: number;
 }
 
 /**
- * Busca todas as conversas ativas da Empresa com alunos (Robusta contra Cache Estaleiro).
+ * Busca todas as conversas ativas de um usuário logado (Empresa ou Aluno) com interlocutores.
  */
-export async function getConversasAtivas(userId: string): Promise<IConversaAtiva[]> {
+export async function getConversasAtivas(
+  usuarioLogadoId: string,
+  role: string = "EMPRESA"
+): Promise<IConversaAtiva[]> {
   try {
     const { prisma } = await import("@/lib/prisma");
 
     if ("mensagem" in prisma && (prisma as any).mensagem) {
-      const userIdsSet = new Set<string>([userId]);
+      const userIdsSet = new Set<string>([usuarioLogadoId]);
 
-      const empUser = await prisma.user.findFirst({ where: { role: "EMPRESA" } });
-      if (empUser) userIdsSet.add(empUser.id);
+      // Inclui IDs de empresa conhecidos caso usuarioLogadoId seja genérico
+      if (role === "EMPRESA" || usuarioLogadoId.toLowerCase().includes("empresa")) {
+        const empUser = await prisma.user.findFirst({ where: { role: "EMPRESA" } });
+        if (empUser) userIdsSet.add(empUser.id);
 
-      const allEmpresas = await prisma.empresa.findMany();
-      allEmpresas.forEach((e: any) => {
-        if (e.userId) userIdsSet.add(e.userId);
-      });
+        const allEmpresas = await prisma.empresa.findMany();
+        allEmpresas.forEach((e: any) => {
+          if (e.userId) userIdsSet.add(e.userId);
+        });
+      }
 
       const targetUserIds = Array.from(userIdsSet);
 
@@ -335,34 +352,22 @@ export async function getConversasAtivas(userId: string): Promise<IConversaAtiva
             alunoAvatarUrl: aluno.avatarUrl,
             ultimaMensagem: ultimaMsg.conteudo,
             ultimaMensagemData: new Date(ultimaMsg.createdAt).toISOString(),
+            dataUltimaMensagem: new Date(ultimaMsg.createdAt).toISOString(),
             naoLidasCount: 0,
           });
         }
       }
 
-      if (conversas.length > 0) {
-        return conversas;
-      }
+      conversas.sort(
+        (a, b) => new Date(b.ultimaMensagemData).getTime() - new Date(a.ultimaMensagemData).getTime()
+      );
+
+      return conversas;
     }
   } catch (e) {
     console.warn("Erro ao buscar conversas ativas no Prisma:", e);
   }
 
-  try {
-    const { getAlunos } = await import("@/services/alunoService");
-    const todosAlunos = await getAlunos();
-    return todosAlunos.map((a, idx) => ({
-      alunoId: a.id,
-      alunoUserId: a.userId || a.id,
-      alunoNome: a.nome,
-      alunoRa: a.ra,
-      alunoCurso: a.curso,
-      alunoAvatarUrl: a.avatarUrl,
-      ultimaMensagem: idx === 0 ? "Olá! Gostaria de saber mais sobre o processo seletivo da vaga." : "Recebi as informações, obrigado!",
-      ultimaMensagemData: new Date().toISOString(),
-      naoLidasCount: idx === 0 ? 1 : 0,
-    }));
-  } catch {
-    return [];
-  }
+  return [];
 }
+

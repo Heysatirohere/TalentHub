@@ -3,6 +3,7 @@
 import { StatusSoftSkill } from "@prisma/client";
 import { IProgressoTrilha } from "@/types/talent";
 import { getAlunos } from "./alunoService";
+import { requireAuth } from "@/lib/authGuard";
 
 export interface IMentoriaPendente {
   id: string;
@@ -22,6 +23,7 @@ export interface IMentoriaPendente {
  * Busca todos os progressos de alunos com o status TESTE_APROVADO (aguardando a conversa com o mentor no Hub Master).
  */
 export async function getMentoriasPendentes(): Promise<IMentoriaPendente[]> {
+  await requireAuth(["MASTER"]);
   try {
     const { prisma } = await import("@/lib/prisma");
     if ("progressoAlunoTrilha" in prisma && (prisma as any).progressoAlunoTrilha) {
@@ -90,6 +92,7 @@ export async function getMentoriasPendentes(): Promise<IMentoriaPendente[]> {
 import { revalidatePath } from "next/cache";
 
 export async function aprovarMentoria(progressoId: string, feedback?: string) {
+  await requireAuth(["MASTER"]);
   try {
     const { prisma } = await import("@/lib/prisma");
     const progressoAtualizado = await prisma.progressoAlunoTrilha.update({
