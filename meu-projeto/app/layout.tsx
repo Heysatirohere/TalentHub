@@ -1,21 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { TalentProvider } from "@/context/TalentContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 
-const geistSans = Geist({
+const inter = Inter({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "FECAP TalentMatch | Banco de Talentos e Recrutamento",
-  description: "Plataforma de recrutamento e inteligência de match de alunos da FECAP para vagas de mercado.",
+  title: "NPA — Núcleo de Protagonismo Alvarista | FECAP",
+  description:
+    "Plataforma institucional de recrutamento, match de habilidades e banco de talentos da FECAP — Fundação Escola de Comércio Álvares Penteado.",
+  keywords: ["FECAP", "NPA", "estágio", "recrutamento", "soft skills", "alunos"],
 };
 
 export default function RootLayout({
@@ -26,12 +25,16 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      data-scroll-behavior="smooth"
+      className={`${inter.variable} h-full`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-slate-950 text-slate-100 font-sans selection:bg-teal-500 selection:text-slate-950">
-        <TalentProvider>
-          <div className="flex-1 flex flex-col">{children}</div>
-        </TalentProvider>
+      <body className="min-h-full flex flex-col font-sans selection:bg-[#00C951]/30 selection:text-[#004A30]">
+        <ThemeProvider>
+          <TalentProvider>
+            <div className="flex-1 flex flex-col">{children}</div>
+          </TalentProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
