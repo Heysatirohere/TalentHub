@@ -4,52 +4,67 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Ler o cookie HttpOnly auth_session
+  // 1. Ler os cookies de autenticação (auth_session e user_role)
   const authSessionCookie = request.cookies.get("auth_session")?.value;
   const legacyRoleCookie = request.cookies.get("user_role")?.value;
 
-  let userRole: string | undefined = legacyRoleCookie?.toLowerCase();
+  let userRole: string | undefined = legacyRoleCookie?.toUpperCase();
 
   if (authSessionCookie) {
     try {
       const parsed = JSON.parse(authSessionCookie);
       if (parsed?.role) {
-        userRole = String(parsed.role).toLowerCase();
+        userRole = String(parsed.role).toUpperCase();
       }
     } catch {
-      // Se não for JSON, trata como string simples
-      userRole = authSessionCookie.toLowerCase();
+      userRole = authSessionCookie.toUpperCase();
     }
   }
 
-  // Redirecionamento legado para rotas do recrutador
+  // Redirecionamento de compatibilidade para rotas legadas do recrutador
   if (pathname.startsWith("/recrutador")) {
     return NextResponse.redirect(new URL("/empresa", request.url));
   }
 
-  // Se não houver cookie ativo e tentar acessar qualquer rota privada
-  if (!userRole && (pathname.startsWith("/aluno") || pathname.startsWith("/empresa") || pathname.startsWith("/master"))) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  // Verifica se o caminho atual é uma rota protegida
+  const isProtectedPath =
+    pathname.startsWith("/aluno") ||
+    pathname.startsWith("/hub") ||
+    pathname.startsWith("/empresa") ||
+    pathname.startsWith("/banco-talentos") ||
+    pathname.startsWith("/vagas") ||
+    pathname.startsWith("/master") ||
+    pathname.startsWith("/admin");
+
+  // 2. Se a rota for protegida e o usuário não estiver autenticado -> Redireciona para /login
+  if (!userRole && isProtectedPath) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  // Proteção RBAC da área Aluno (/aluno)
-  if (pathname.startsWith("/aluno")) {
-    if (userRole !== "aluno") {
-      return NextResponse.redirect(new URL("/login", request.url));
+  // 3. Proteção RBAC estrita para rotas /aluno e /hub (Role permitida: ALUNO)
+  if (pathname.startsWith("/aluno") || pathname.startsWith("/hub")) {
+    if (userRole !== "ALUNO") {
+      return NextResponse.redirect(new URL("/acesso-negado", request.url));
     }
   }
 
-  // Proteção RBAC da área Empresa (/empresa)
-  if (pathname.startsWith("/empresa")) {
-    if (userRole !== "empresa") {
-      return NextResponse.redirect(new URL("/login", request.url));
+  // 4. Proteção RBAC estrita para rotas /empresa, /banco-talentos e /vagas (Role permitida: EMPRESA)
+  if (
+    pathname.startsWith("/empresa") ||
+    pathname.startsWith("/banco-talentos") ||
+    pathname.startsWith("/vagas")
+  ) {
+    if (userRole !== "EMPRESA") {
+      return NextResponse.redirect(new URL("/acesso-negado", request.url));
     }
   }
 
-  // Proteção RBAC da área Master (/master)
-  if (pathname.startsWith("/master")) {
-    if (userRole !== "master") {
-      return NextResponse.redirect(new URL("/login", request.url));
+  // 5. Proteção RBAC estrita para rotas /master e /admin (Role permitida: MASTER)
+  if (pathname.startsWith("/master") || pathname.startsWith("/admin")) {
+    if (userRole !== "MASTER") {
+      return NextResponse.redirect(new URL("/acesso-negado", request.url));
     }
   }
 
@@ -59,8 +74,12 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/aluno/:path*",
+    "/hub/:path*",
     "/empresa/:path*",
+    "/banco-talentos/:path*",
+    "/vagas/:path*",
     "/master/:path*",
+    "/admin/:path*",
     "/recrutador/:path*",
   ],
 };
