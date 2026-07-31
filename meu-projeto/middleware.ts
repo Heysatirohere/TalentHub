@@ -4,12 +4,7 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Se o usuário acessar a raiz (/), redireciona direto para o login
-  if (pathname === "/") {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  // 2. Ler os cookies de autenticação (auth_session e user_role)
+  // 1. Ler os cookies de autenticação (auth_session e user_role)
   const authSessionCookie = request.cookies.get("auth_session")?.value;
   const legacyRoleCookie = request.cookies.get("user_role")?.value;
 
@@ -41,21 +36,21 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/master") ||
     pathname.startsWith("/admin");
 
-  // 3. Se a rota for protegida e o usuário não estiver autenticado -> Redireciona para /login
+  // 2. Se a rota for protegida e o usuário não estiver autenticado -> Redireciona para /login
   if (!userRole && isProtectedPath) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // 4. Proteção RBAC estrita para rotas /aluno e /hub (Role permitida: ALUNO)
+  // 3. Proteção RBAC estrita para rotas /aluno e /hub (Role permitida: ALUNO)
   if (pathname.startsWith("/aluno") || pathname.startsWith("/hub")) {
     if (userRole !== "ALUNO") {
       return NextResponse.redirect(new URL("/acesso-negado", request.url));
     }
   }
 
-  // 5. Proteção RBAC estrita para rotas /empresa, /banco-talentos e /vagas (Role permitida: EMPRESA)
+  // 4. Proteção RBAC estrita para rotas /empresa, /banco-talentos e /vagas (Role permitida: EMPRESA)
   if (
     pathname.startsWith("/empresa") ||
     pathname.startsWith("/banco-talentos") ||
@@ -66,7 +61,7 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 6. Proteção RBAC estrita para rotas /master e /admin (Role permitida: MASTER)
+  // 5. Proteção RBAC estrita para rotas /master e /admin (Role permitida: MASTER)
   if (pathname.startsWith("/master") || pathname.startsWith("/admin")) {
     if (userRole !== "MASTER") {
       return NextResponse.redirect(new URL("/acesso-negado", request.url));
@@ -78,7 +73,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/",
     "/aluno/:path*",
     "/hub/:path*",
     "/empresa/:path*",
