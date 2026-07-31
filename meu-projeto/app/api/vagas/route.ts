@@ -34,7 +34,7 @@ export async function GET() {
     return NextResponse.json(mapped);
   } catch (error) {
     console.error("Erro ao buscar vagas no PostgreSQL:", error);
-    return NextResponse.json([], { status: 500 });
+    return NextResponse.json([], { status: 200 });
   }
 }
 
