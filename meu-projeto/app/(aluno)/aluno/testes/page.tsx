@@ -3,14 +3,9 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { 
-  BookOpen, 
-  ShieldCheck, 
-  ArrowLeft, 
-  CheckCircle2, 
-  Check,
-  Award,
-  FileCheck
+import {
+  BookOpen, ShieldCheck, ArrowLeft, CheckCircle2, Check,
+  Award, FileCheck
 } from "lucide-react";
 import { useTalent } from "@/context/TalentContext";
 import { SoftSkills, SOFT_SKILLS_LABELS } from "@/types/talent";
@@ -53,88 +48,96 @@ export default function HistoricoAlunoPage() {
   };
 
   return (
-    <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
-      
-      {/* Header */}
-      <div className="flex items-center space-x-3">
-        <Link href="/aluno" className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white">
+    <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
+
+      {/* ── Header ── */}
+      <div className="flex items-center gap-3 animate-fade-up">
+        <Link href="/aluno" className="npa-btn-ghost p-2 rounded-xl shrink-0" aria-label="Voltar">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <div>
-          <h1 className="text-2xl font-extrabold text-white flex items-center space-x-2">
-            <span>Histórico Escolar Oficial & Competências</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-              Validado pela Instituição
+        <div className="min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-head leading-tight">
+              Histórico Escolar & Competências
+            </h1>
+            <span className="npa-badge text-[10px] self-start sm:self-auto">
+              Validado FECAP
             </span>
-          </h1>
-          <p className="text-xs text-slate-400">
-            Notas integradas diretamente do sistema acadêmico FECAP para cálculo de Média Ponderada com Vagas.
-          </p>
-        </div>
-      </div>
-
-      {/* Card de Resumo Acadêmico (CR) */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950/40 border border-slate-800 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
-        <div className="space-y-1">
-          <div className="flex items-center space-x-2 text-emerald-400 font-bold text-sm">
-            <Award className="w-5 h-5" />
-            <span>Média Ponderada Geral (Coeficiente de Rendimento)</span>
           </div>
-          <p className="text-xs text-slate-400">
-            Média oficial computada com base nas disciplinas concluídas na graduação FECAP.
+          <p className="text-xs text-muted">
+            Notas integradas do sistema acadêmico FECAP.
           </p>
-        </div>
-        <div className="text-center px-6 py-3 bg-slate-950/80 rounded-2xl border border-emerald-500/30">
-          <span className="block text-3xl font-extrabold text-emerald-400">{mediaPonderadaGeral}</span>
-          <span className="text-[10px] text-slate-400 uppercase font-semibold">Nota Média (0 a 10)</span>
         </div>
       </div>
 
-      {/* Tabela do Boletim Acadêmico */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-white flex items-center space-x-2">
-            <BookOpen className="w-5 h-5 text-emerald-400" />
+      {/* ── CR Resumo ── */}
+      <div
+        className="rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border animate-fade-up"
+        style={{ background: "var(--bg-surface)", borderColor: "var(--border-light)", boxShadow: "var(--shadow-sm)" }}
+      >
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 font-bold text-sm text-npa">
+            <Award className="w-5 h-5 text-npa" />
+            <span>Média Ponderada Geral (CR)</span>
+          </div>
+          <p className="text-xs text-muted leading-relaxed">
+            Média oficial computada com base nas disciplinas concluídas.
+          </p>
+        </div>
+        <div
+          className="text-center px-5 py-2.5 rounded-xl border shrink-0 w-full sm:w-auto"
+          style={{ background: "var(--bg-raised)", borderColor: "var(--border-base)" }}
+        >
+          <span className="block text-2xl sm:text-3xl font-black text-npa">{mediaPonderadaGeral}</span>
+          <span className="text-[10px] text-muted uppercase font-semibold">Nota Média (0-10)</span>
+        </div>
+      </div>
+
+      {/* ── Boletim ── */}
+      <div className="npa-card rounded-2xl p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <h2 className="text-sm font-bold text-head flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-npa" />
             <span>Boletim de Disciplinas FECAP</span>
           </h2>
-          <span className="text-xs text-slate-400 font-mono">{historico.length} Matérias Cadastradas</span>
+          <span className="text-xs text-muted font-mono">{historico.length} Matérias</span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950 text-slate-400 font-semibold uppercase text-[10px] border-b border-slate-800">
+        <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "var(--border-light)" }}>
+          <table className="w-full text-left text-xs min-w-[480px] npa-table">
+            <thead>
               <tr>
                 <th className="p-3">Disciplina / Matéria</th>
-                <th className="p-3">Semestre Letivo</th>
+                <th className="p-3">Semestre</th>
                 <th className="p-3 text-center">Nota Final (0-10)</th>
-                <th className="p-3 text-right">Status de Validação</th>
+                <th className="p-3 text-right">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y" style={{ borderColor: "var(--border-light)" }}>
               {historico.map((item, idx) => (
-                <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="p-3 font-bold text-white flex items-center space-x-2">
-                    <BookOpen className="w-4 h-4 text-emerald-400 shrink-0" />
+                <tr key={idx}>
+                  <td className="p-3 font-bold text-head flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-npa shrink-0" />
                     <span>{item.materia}</span>
                   </td>
-                  <td className="p-3 font-mono text-slate-400">{item.semestre}</td>
+                  <td className="p-3 font-mono text-muted">{item.semestre}</td>
                   <td className="p-3 text-center">
                     <span
-                      className={`inline-block font-mono font-bold text-sm px-2.5 py-0.5 rounded-lg border ${
+                      className={`inline-block font-mono font-bold text-xs px-2.5 py-0.5 rounded-lg border ${
                         item.nota >= 8.5
-                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                           : item.nota >= 7.0
-                          ? "bg-blue-500/20 text-blue-300 border-blue-500/40"
-                          : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                          ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                          : "bg-amber-500/10 text-amber-600 border-amber-500/20"
                       }`}
                     >
                       {item.nota.toFixed(1)}
                     </span>
                   </td>
                   <td className="p-3 text-right">
-                    <span className="inline-flex items-center space-x-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/30">
-                      <FileCheck className="w-3.5 h-3.5" />
-                      <span>Validado FECAP</span>
+                    <span className="npa-badge text-[10px]">
+                      <FileCheck className="w-3 h-3" />
+                      Validado
                     </span>
                   </td>
                 </tr>
@@ -144,18 +147,20 @@ export default function HistoricoAlunoPage() {
         </div>
       </div>
 
-      {/* Mapeamento de Soft Skills */}
+      {/* ── Soft Skills ── */}
       <form onSubmit={handleSalvar} className="space-y-6">
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
-          <h2 className="text-base font-bold text-amber-400 flex items-center space-x-2">
-            <ShieldCheck className="w-5 h-5 text-amber-400" />
-            <span>Mapeamento de Competências Comportamentais (Soft Skills)</span>
-          </h2>
-          <p className="text-xs text-slate-400">
-            Selecione suas habilidades interpessoais ativas para cruzamento com os requisitos das vagas.
-          </p>
+        <div className="npa-card rounded-2xl p-5 space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-sm font-bold text-head flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-npa" />
+              <span>Competências Comportamentais (Soft Skills)</span>
+            </h2>
+            <p className="text-xs text-muted">
+              Selecione suas habilidades interpessoais para cruzamento com os requisitos de vagas.
+            </p>
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {(Object.keys(SOFT_SKILLS_LABELS) as (keyof SoftSkills)[]).map((key) => {
               const active = softSkillsState[key];
               return (
@@ -163,14 +168,18 @@ export default function HistoricoAlunoPage() {
                   key={key}
                   type="button"
                   onClick={() => toggleSkill(key)}
-                  className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
+                  className="p-3 rounded-xl border flex items-center justify-between transition-all"
+                  style={
                     active
-                      ? "bg-amber-500/10 border-amber-500/40 text-amber-300"
-                      : "bg-slate-950 border-slate-800 text-slate-500"
-                  }`}
+                      ? { background: "rgba(0,74,48,0.08)", borderColor: "rgba(0,74,48,0.25)", color: "#004A30" }
+                      : { background: "var(--bg-sunken)", borderColor: "var(--border-light)", color: "var(--text-muted)" }
+                  }
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-4 h-4 rounded flex items-center justify-center border ${active ? "bg-amber-500 border-amber-500 text-slate-950" : "border-slate-700"}`}>
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className="w-4 h-4 rounded flex items-center justify-center border shrink-0 text-white font-bold"
+                      style={active ? { background: "#004A30", borderColor: "#004A30" } : { borderColor: "var(--border-strong)" }}
+                    >
                       {active && <Check className="w-3 h-3 stroke-[3]" />}
                     </div>
                     <span className="text-xs font-semibold">{SOFT_SKILLS_LABELS[key]}</span>
@@ -181,12 +190,12 @@ export default function HistoricoAlunoPage() {
           </div>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
           <button
             type="submit"
-            className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 flex items-center space-x-2"
+            className="npa-btn-primary w-full sm:w-auto justify-center py-3 rounded-xl text-xs"
           >
-            <CheckCircle2 className="w-5 h-5 text-slate-950" />
+            <CheckCircle2 className="w-4 h-4" />
             <span>Salvar Preferências Comportamentais</span>
           </button>
         </div>

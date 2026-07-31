@@ -374,11 +374,11 @@ export default function CadastroAlunoPage() {
               })}
             </div>
 
-            <div className="pt-6 border-t border-slate-800 flex justify-between">
+            <div className="pt-6 border-t border-slate-800 flex flex-col-reverse sm:flex-row justify-between gap-3">
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm flex items-center space-x-2 transition-colors"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm flex items-center justify-center space-x-2 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Voltar</span>
@@ -387,7 +387,7 @@ export default function CadastroAlunoPage() {
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="px-6 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-sm flex items-center space-x-2 transition-colors"
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-sm flex items-center justify-center space-x-2 transition-colors"
               >
                 <span>Revisão Final</span>
                 <ArrowRight className="w-4 h-4" />
@@ -431,11 +431,11 @@ export default function CadastroAlunoPage() {
               </div>
             </div>
 
-            <div className="pt-6 border-t border-slate-800 flex justify-between">
+            <div className="pt-6 border-t border-slate-800 flex flex-col-reverse sm:flex-row justify-between gap-3">
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm flex items-center space-x-2 transition-colors"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm flex items-center justify-center space-x-2 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Voltar</span>
@@ -443,7 +443,7 @@ export default function CadastroAlunoPage() {
 
               <button
                 type="submit"
-                className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/25 flex items-center space-x-2 transition-transform duration-150 active:scale-95"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/25 flex items-center justify-center space-x-2 transition-transform duration-150 active:scale-95"
               >
                 <CheckCircle2 className="w-5 h-5 text-slate-950" />
                 <span>Concluir Cadastro com Senha</span>
