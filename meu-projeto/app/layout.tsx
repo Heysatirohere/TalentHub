@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   keywords: ["FECAP", "NPA", "estágio", "recrutamento", "soft skills", "alunos"],
 };
 
+import { FloatingNav } from "@/components/FloatingNav";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,7 +34,8 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans selection:bg-[#00C951]/30 selection:text-[#004A30]">
         <ThemeProvider>
           <TalentProvider>
-            <div className="flex-1 flex flex-col">{children}</div>
+            <div className="flex-1 flex flex-col pb-20">{children}</div>
+            <FloatingNav />
           </TalentProvider>
         </ThemeProvider>
       </body>
