@@ -1,223 +1,257 @@
 "use client";
 
 import Link from "next/link";
-import { 
-  GraduationCap, 
-  Briefcase, 
-  ShieldCheck, 
-  ArrowRight, 
-  LogIn, 
-  UserPlus,
-  Sparkles,
-  Users,
-  CheckCircle2,
-  BrainCircuit
+import {
+  ArrowRight, LogIn, UserPlus, Users, CheckCircle2, BrainCircuit,
+  GraduationCap, Briefcase, ShieldCheck, ChevronRight
 } from "lucide-react";
 import { useTalent } from "@/context/TalentContext";
+import { useTheme } from "@/context/ThemeContext";
+import { Sun, Moon } from "lucide-react";
+
+/* ── Logo SVG custom ───────────────────────────── */
+function NpaLogomark({ size = 44 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 44 44" fill="none" aria-hidden="true">
+      <rect width="44" height="44" rx="13" fill="#00FF55" />
+      <path d="M8 12v20M8 12l11 12V12M19 32V12" stroke="#004A30" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="33" cy="14" r="3" fill="#004A30"/>
+      <path d="M25 32l5.5-11 5.5 11M26.8 27h7.4" stroke="#004A30" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+/* ── Hub card ───────────────────────────────────── */
+function HubCard({
+  icon: Icon,
+  title,
+  description,
+  href,
+  accent,
+  delay = "0s",
+}: {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  href: string;
+  accent: string;
+  delay?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group npa-card npa-card-interactive rounded-2xl p-7 flex flex-col gap-5 animate-fade-up"
+      style={{ animationDelay: delay }}
+    >
+      <div
+        className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: accent, boxShadow: `0 4px 14px ${accent}55` }}
+      >
+        <Icon className="w-6 h-6 text-white" strokeWidth={1.8} />
+      </div>
+      <div className="space-y-2 flex-1">
+        <h3 className="font-bold text-lg text-head leading-snug">{title}</h3>
+        <p className="text-muted text-sm leading-relaxed">{description}</p>
+      </div>
+      <div className="flex items-center gap-1.5 text-xs font-bold" style={{ color: accent }}>
+        <span>Acessar</span>
+        <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+      </div>
+    </Link>
+  );
+}
+
+/* ── Stat card ──────────────────────────────────── */
+function StatCard({ value, label, sub, delay = "0s" }: { value: string | number; label: string; sub: string; delay?: string }) {
+  return (
+    <div className="npa-stat animate-fade-up text-center space-y-1" style={{ animationDelay: delay }}>
+      <p className="text-4xl font-black text-npa">{value}</p>
+      <p className="text-xs font-bold uppercase tracking-wider text-muted">{label}</p>
+      <p className="text-[11px] text-subtle">{sub}</p>
+    </div>
+  );
+}
 
 export default function Home() {
   const { alunos, vagas } = useTalent();
-
+  const { theme, toggle } = useTheme();
   const vagasAprovadas = vagas.filter((v) => v.status === "aprovada").length;
 
   return (
-    <main className="flex-1 flex flex-col justify-between bg-slate-950">
-      {/* Public Header for Landing Page */}
-      <header className="border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:scale-105 transition-transform duration-200">
-              <GraduationCap className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
-                FECAP <span className="text-teal-400">TalentHub</span>
-              </span>
-              <span className="block text-[10px] font-medium text-slate-400 -mt-1 uppercase tracking-wider">
-                Recrutamento & Match
-              </span>
+    <main className="flex-1 flex flex-col" style={{ background: "var(--bg-base)" }}>
+
+      {/* ─── Header ──────────────────────────────────────── */}
+      <header className="npa-nav sticky top-0 z-50">
+        <div className="h-0.5 bg-gradient-to-r from-[#004A30] via-[#00FF55] to-[#004A30]" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5" aria-label="NPA — Início">
+            <NpaLogomark size={34} />
+            <div className="leading-none">
+              <span className="font-black text-white text-base tracking-tight block">NPA</span>
+              <span className="text-[10px] font-medium text-white/50 uppercase tracking-widest block -mt-0.5">FECAP</span>
             </div>
           </Link>
 
-          <Link
-            href="/login"
-            className="flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold text-slate-950 bg-teal-400 hover:bg-teal-300 shadow-md shadow-teal-500/20 transition-all"
-          >
-            <LogIn className="w-4 h-4 text-slate-950" />
-            <span>Entrar / Selecionar Perfil</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggle}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-all"
+              aria-label="Alternar tema"
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+            <Link
+              href="/login"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#004A30] bg-[#00FF55] hover:bg-[#33ff77] shadow-sm transition-all"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Entrar</span>
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* Hero Section SaaS Style */}
-      <section className="relative overflow-hidden py-20 md:py-28 border-b border-slate-800/80">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-teal-950/40 via-slate-950 to-slate-950 -z-10" />
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto space-y-8">
-            
-            {/* Top Badge */}
-            <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs font-semibold tracking-wide uppercase shadow-sm">
-              <GraduationCap className="w-4 h-4 text-teal-400" />
-              <span>Fundação Escola de Comércio Álvares Penteado</span>
-            </div>
+      {/* ─── Hero ────────────────────────────────────────── */}
+      <section className="relative overflow-hidden pt-20 pb-28">
+        {/* Blob decorativo */}
+        <div
+          aria-hidden="true"
+          className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full opacity-[0.06] pointer-events-none"
+          style={{ background: "radial-gradient(circle, #00FF55 0%, transparent 70%)" }}
+        />
+        <div
+          aria-hidden="true"
+          className="absolute top-0 left-0 right-0 h-px opacity-20"
+          style={{ background: "linear-gradient(90deg, transparent, #00FF55, transparent)" }}
+        />
 
-            {/* Main Headline */}
-            <div className="space-y-3">
-              <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
-                TalentHub <span className="bg-gradient-to-r from-teal-400 via-emerald-300 to-cyan-400 bg-clip-text text-transparent">FECAP</span>
-              </h1>
-              <p className="text-xl sm:text-2xl font-semibold text-slate-200 tracking-tight">
-                Inteligência de Recrutamento Universitário & Match de Habilidades
-              </p>
-            </div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
 
-            {/* Subtitle with High Contrast */}
-            <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto font-normal">
-              Ecossistema integrado para conexão entre estudantes, coordenação docente e mercado corporativo com avaliação de Soft Skills e Média Ponderada Técnica.
+          {/* Chip institucional */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-semibold uppercase tracking-widest animate-fade-up"
+            style={{ background: "rgba(0,74,48,0.06)", borderColor: "rgba(0,74,48,0.15)", color: "#004A30" }}>
+            <div className="w-1.5 h-1.5 rounded-full bg-[#00C951] animate-pulse" />
+            <span className="dark:hidden">Fundação Escola de Comércio Álvares Penteado</span>
+            <span className="hidden dark:inline" style={{ color: "#00C951" }}>Fundação Escola de Comércio Álvares Penteado</span>
+          </div>
+
+          {/* Headline */}
+          <div className="space-y-4 animate-fade-up delay-100">
+            <div className="flex items-center justify-center gap-4 mb-2">
+              <NpaLogomark size={52} />
+            </div>
+            <h1 className="text-6xl sm:text-8xl font-black tracking-tighter leading-none">
+              <span className="npa-gradient-text">NPA</span>
+            </h1>
+            <p className="text-xl sm:text-2xl font-semibold text-body">
+              Núcleo de Protagonismo <span className="text-npa font-black dark:text-neon">Alvarista</span>
             </p>
+          </div>
 
-            {/* Premium Clean CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-              <Link
-                href="/login"
-                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold text-sm shadow-xl shadow-teal-500/20 flex items-center justify-center space-x-2.5 group transition-all duration-200"
-              >
-                <span>Acessar Plataforma</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
+          {/* Subtítulo */}
+          <p className="text-base sm:text-lg text-muted max-w-2xl mx-auto leading-relaxed animate-fade-up delay-200">
+            Plataforma institucional que conecta estudantes FECAP ao mercado de trabalho
+            através de avaliação de competências, match inteligente e banco de talentos verificado.
+          </p>
 
-              <Link
-                href="/cadastro"
-                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800/90 text-white font-semibold text-sm border border-slate-700/80 flex items-center justify-center space-x-2 transition-colors"
-              >
-                <UserPlus className="w-4 h-4 text-teal-400" />
-                <span>Novo Aluno (Cadastrar via RA)</span>
-              </Link>
-            </div>
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-up delay-300">
+            <Link href="/login" className="npa-btn-primary px-8 py-3.5 text-sm rounded-2xl">
+              <LogIn className="w-4 h-4" />
+              Acessar Plataforma
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link href="/cadastro" className="npa-btn-ghost px-8 py-3.5 text-sm rounded-2xl">
+              <UserPlus className="w-4 h-4" />
+              Cadastrar via RA
+            </Link>
+          </div>
 
-            {/* Refactored Stats Cards (SaaS Style) */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-10 border-t border-slate-800/80 mt-12">
-              
-              <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-teal-500/30 transition-all shadow-xl text-center space-y-1">
-                <div className="flex justify-center mb-2">
-                  <Users className="w-5 h-5 text-teal-400" />
-                </div>
-                <p className="text-4xl sm:text-5xl font-extrabold text-teal-400 tracking-tight">{alunos.length}</p>
-                <p className="text-slate-300 text-xs font-semibold uppercase tracking-wider">Estudantes Cadastrados</p>
-                <p className="text-[11px] text-slate-500">Base FECAP atualizada</p>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/30 transition-all shadow-xl text-center space-y-1">
-                <div className="flex justify-center mb-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                </div>
-                <p className="text-4xl sm:text-5xl font-extrabold text-emerald-400 tracking-tight">{vagasAprovadas}</p>
-                <p className="text-slate-300 text-xs font-semibold uppercase tracking-wider">Campanhas Aprovadas</p>
-                <p className="text-[11px] text-slate-500">Validadas pelo Master</p>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-cyan-500/30 transition-all shadow-xl text-center space-y-1">
-                <div className="flex justify-center mb-2">
-                  <BrainCircuit className="w-5 h-5 text-cyan-400" />
-                </div>
-                <p className="text-4xl sm:text-5xl font-extrabold text-cyan-400 tracking-tight">3 Hubs</p>
-                <p className="text-slate-300 text-xs font-semibold uppercase tracking-wider">Módulos Conectados</p>
-                <p className="text-[11px] text-slate-500">Aluno &bull; Master &bull; Empresa</p>
-              </div>
-
-            </div>
-
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto pt-10 border-t animate-fade-up delay-400"
+            style={{ borderColor: "var(--border-light)" }}>
+            <StatCard value={alunos.length} label="Estudantes" sub="Cadastrados" delay="0.4s" />
+            <StatCard value={vagasAprovadas} label="Campanhas" sub="Aprovadas" delay="0.5s" />
+            <StatCard value="3" label="Módulos" sub="Conectados" delay="0.6s" />
           </div>
         </div>
       </section>
 
-      {/* 3 Hubs Institutional Overview */}
-      <section className="py-20 bg-slate-900/40 border-b border-slate-800">
+      {/* ─── 3 Hubs ──────────────────────────────────────── */}
+      <section className="py-20 border-t" style={{ background: "var(--bg-surface)", borderColor: "var(--border-light)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-2">
-            <h2 className="text-3xl font-bold text-white tracking-tight">Arquitetura em Três Hubs</h2>
-            <p className="text-slate-400 text-sm">
-              Conheça os fluxos de trabalho projetados para cada ator da plataforma.
+
+          <div className="text-center mb-14 space-y-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted">Ecossistema NPA</p>
+            <h2 className="text-3xl font-black text-head tracking-tight">Três perfis. Um sistema.</h2>
+            <p className="text-muted text-sm max-w-md mx-auto">
+              Cada ator tem seu espaço de trabalho com fluxos específicos e integração total.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            
-            {/* Hub 1: Aluno */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-slate-900 border border-slate-800 space-y-5 hover:border-emerald-500/40 transition-all shadow-xl flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                  <GraduationCap className="w-6 h-6 text-emerald-400" />
-                </div>
-                <h3 className="text-xl font-bold text-white">Hub do Aluno</h3>
-                <p className="text-slate-300 text-xs leading-relaxed">
-                  Realize os testes de nivelamento técnico e soft skills, gerencie suas experiências profissionais e envie o pack de documentos para validação acadêmica.
-                </p>
-              </div>
-              <Link
-                href="/login?role=aluno"
-                className="inline-flex items-center space-x-2 text-xs font-bold text-emerald-400 hover:text-emerald-300 pt-2"
-              >
-                <span>Acessar Hub do Aluno</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            {/* Hub 2: Master */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-slate-900 border border-slate-800 space-y-5 hover:border-cyan-500/40 transition-all shadow-xl flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-                  <ShieldCheck className="w-6 h-6 text-cyan-400" />
-                </div>
-                <h3 className="text-xl font-bold text-white">Hub Master / Coordenação</h3>
-                <p className="text-slate-300 text-xs leading-relaxed">
-                  Painel de governança universitária com tempo médio de match, estatísticas globais de habilidades da FECAP e auditoria de aprovação de vagas.
-                </p>
-              </div>
-              <Link
-                href="/login?role=master"
-                className="inline-flex items-center space-x-2 text-xs font-bold text-cyan-400 hover:text-cyan-300 pt-2"
-              >
-                <span>Acessar Hub Master</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            {/* Hub 3: Empresa */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-slate-900 border border-slate-800 space-y-5 hover:border-teal-500/40 transition-all shadow-xl flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
-                  <Briefcase className="w-6 h-6 text-teal-400" />
-                </div>
-                <h3 className="text-xl font-bold text-white">Hub da Empresa</h3>
-                <p className="text-slate-300 text-xs leading-relaxed">
-                  Publique campanhas de estágio/vagas com pesos técnicos e utilize o módulo de **Busca Ativa** para prospecção proativa de talentos sem necessidade de vaga aberta.
-                </p>
-              </div>
-              <Link
-                href="/login?role=empresa"
-                className="inline-flex items-center space-x-2 text-xs font-bold text-teal-400 hover:text-teal-300 pt-2"
-              >
-                <span>Acessar Hub da Empresa</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
+          <div className="grid md:grid-cols-3 gap-6">
+            <HubCard
+              icon={GraduationCap}
+              title="Hub do Aluno"
+              description="Gerencie seu perfil acadêmico, realize testes de soft skills, acompanhe candidaturas e envie documentos para validação institucional."
+              href="/login?role=aluno"
+              accent="#004A30"
+              delay="0.1s"
+            />
+            <HubCard
+              icon={ShieldCheck}
+              title="Hub Master"
+              description="Painel de governança com métricas de empregabilidade, distribuição de competências e validação de mentorias dos estudantes FECAP."
+              href="/login?role=master"
+              accent="#006944"
+              delay="0.2s"
+            />
+            <HubCard
+              icon={Briefcase}
+              title="Hub Empresas"
+              description="Publique vagas com pesos técnicos, acesse o banco de talentos verificado e use a Busca Ativa para prospecção sem vaga aberta."
+              href="/login?role=empresa"
+              accent="#00A040"
+              delay="0.3s"
+            />
           </div>
-
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 bg-slate-950 border-t border-slate-800 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-2">
-            <GraduationCap className="w-4 h-4 text-teal-400" />
-            <span className="font-semibold text-slate-300">Fundação Escola de Comércio Álvares Penteado (FECAP)</span>
+      {/* ─── Features strip ─────────────────────────────── */}
+      <section className="py-16" style={{ background: "var(--bg-base)" }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              { icon: "📊", title: "Match Inteligente", desc: "Algoritmo de cruzamento entre perfil do aluno e requisitos da vaga." },
+              { icon: "🏛️", title: "Validação FECAP", desc: "Histórico acadêmico e soft skills verificadas pela instituição." },
+              { icon: "💬", title: "Chat Integrado", desc: "Comunicação direta entre recrutadores e candidatos na plataforma." },
+              { icon: "📈", title: "Analytics em Tempo Real", desc: "Indicadores de empregabilidade para coordenação acadêmica." },
+            ].map((f, i) => (
+              <div
+                key={i}
+                className="npa-card rounded-xl p-5 space-y-2 animate-fade-up"
+                style={{ animationDelay: `${i * 0.1}s` }}
+              >
+                <div className="text-2xl">{f.icon}</div>
+                <h3 className="font-bold text-sm text-head">{f.title}</h3>
+                <p className="text-xs text-muted leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
           </div>
-          <p>© {new Date().getFullYear()} TalentHub FECAP &bull; Banco de Talentos Universitário</p>
+        </div>
+      </section>
+
+      {/* ─── Footer ──────────────────────────────────────── */}
+      <footer className="npa-nav py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/50">
+          <div className="flex items-center gap-2.5">
+            <NpaLogomark size={24} />
+            <span className="font-semibold text-white/70">
+              NPA — Núcleo de Protagonismo Alvarista
+            </span>
+          </div>
+          <p>© {new Date().getFullYear()} FECAP &bull; Todos os direitos reservados</p>
         </div>
       </footer>
 
