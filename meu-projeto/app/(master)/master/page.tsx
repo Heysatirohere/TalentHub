@@ -2,47 +2,56 @@
 
 import React, { useMemo } from "react";
 import Link from "next/link";
-import { 
-  ShieldCheck, 
-  Clock, 
-  Users, 
-  CheckCircle2, 
-  XCircle, 
-  AlertTriangle, 
-  ArrowRight, 
-  TrendingUp, 
-  BrainCircuit,
-  GraduationCap
+import {
+  ShieldCheck, Clock, Users, CheckCircle2,
+  ArrowRight, TrendingUp, BrainCircuit, Building2, Award
 } from "lucide-react";
 import { useTalent } from "@/context/TalentContext";
 import { SOFT_SKILLS_LABELS, SoftSkills } from "@/types/talent";
 
+function KpiCard({
+  label, value, unit, sub, icon: Icon, accent = "#004A30", delay = "0s",
+}: {
+  label: string; value: string | number; unit?: string; sub: string;
+  icon: React.ElementType; accent?: string; delay?: string;
+}) {
+  return (
+    <div className="npa-stat rounded-2xl animate-fade-up" style={{ animationDelay: delay }}>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-muted">{label}</span>
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center"
+          style={{ background: `${accent}12`, border: `1px solid ${accent}20` }}
+        >
+          <Icon className="w-4 h-4" style={{ color: accent }} strokeWidth={1.8} />
+        </div>
+      </div>
+      <p className="text-3xl font-black text-head">
+        {value}{unit && <span className="text-sm font-normal text-muted ml-1">{unit}</span>}
+      </p>
+      <p className="text-[11px] text-muted mt-1">{sub}</p>
+    </div>
+  );
+}
+
 export default function MasterDashboardPage() {
   const { alunos, vagas } = useTalent();
 
-  const pendentesCount = vagas.filter((v) => v.status === "pendente_aprovacao").length;
-  const aprovadasCount = vagas.filter((v) => v.status === "aprovada").length;
-  const rejeitadasCount = vagas.filter((v) => v.status === "rejeitada").length;
-
-  // Calculo de estatísticas gerais de Soft Skills na universidade
   const softSkillsStats = useMemo(() => {
     const totalAlunos = alunos.length || 1;
     const stats: Record<keyof SoftSkills, number> = {
-      comunicacao: 0,
-      trabalhoEmEquipe: 0,
-      lideranca: 0,
-      resolucaoProblemas: 0,
-      adaptabilidade: 0,
-      pensamentoCritico: 0,
+      comunicacao: 0, trabalhoEmEquipe: 0, lideranca: 0,
+      resolucaoProblemas: 0, adaptabilidade: 0, pensamentoCritico: 0,
     };
-
     alunos.forEach((a) => {
       (Object.keys(stats) as (keyof SoftSkills)[]).forEach((key) => {
-        if (a.softSkills?.[key] || a.progressosTrilha?.some(p => p.trilhaNome.toLowerCase() === key.toLowerCase() && p.status !== "EM_TRILHA")) stats[key]++;
+        if (
+          a.softSkills?.[key] ||
+          a.progressosTrilha?.some(p => p.trilhaNome.toLowerCase() === key.toLowerCase() && p.status !== "EM_TRILHA")
+        ) stats[key]++;
       });
     });
-
-    return (Object.keys(stats) as (keyof SoftSkills)[]).map((key) => ({
+    return (Object.keys(stats) as (keyof SoftSkills)[]).map(key => ({
       key,
       label: SOFT_SKILLS_LABELS[key],
       count: stats[key],
@@ -52,150 +61,126 @@ export default function MasterDashboardPage() {
 
   return (
     <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
-      
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-cyan-950/40 border border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-2xl">
-        <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-3">
-            <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Painel da Coordenação Master FECAP</span>
+
+      {/* ── Banner ── */}
+      <div
+        className="rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border animate-fade-up"
+        style={{ background: "var(--bg-surface)", borderColor: "var(--border-light)", boxShadow: "var(--shadow-sm)" }}
+      >
+        <div className="space-y-2">
+          <div className="npa-badge inline-flex">
+            <ShieldCheck className="w-3 h-3" />
+            Coordenação Master FECAP
           </div>
-          <h1 className="text-3xl font-extrabold text-white">Métricas de Match & Governança</h1>
-          <p className="text-slate-400 text-sm mt-1">
-            Acompanhamento analítico da empregabilidade universitária e auditoria de campanhas empresariais.
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-head">
+            Métricas & Governança
+          </h1>
+          <p className="text-sm text-muted max-w-lg">
+            Acompanhamento analítico da empregabilidade universitária e indicadores de contratação.
           </p>
         </div>
 
-        {/* Action Call for Pending Approvals */}
-        <Link
-          href="/master/campanhas"
-          className={`px-6 py-3.5 rounded-2xl font-bold text-xs flex items-center space-x-2 transition-all border ${
-            pendentesCount > 0
-              ? "bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-400 shadow-lg shadow-amber-500/20"
-              : "bg-slate-800 hover:bg-slate-700 text-white border-slate-700"
-          }`}
-        >
-          <AlertTriangle className="w-4 h-4" />
-          <span>Fila de Aprovação ({pendentesCount} Pendente)</span>
+        <Link href="/master/campanhas" className="npa-btn-primary rounded-xl shrink-0">
+          <Building2 className="w-4 h-4" />
+          Ver Campanhas ({vagas.length})
           <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        
-        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold uppercase">Tempo Médio de Match</span>
-            <Clock className="w-4 h-4 text-cyan-400" />
-          </div>
-          <p className="text-3xl font-extrabold text-white">4.2 <span className="text-sm font-normal text-slate-400">Dias</span></p>
-          <p className="text-[11px] text-emerald-400 flex items-center space-x-1">
-            <TrendingUp className="w-3 h-3" />
-            <span>18% mais rápido que o trimestre anterior</span>
-          </p>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold uppercase">Total de Alunos Base</span>
-            <Users className="w-4 h-4 text-teal-400" />
-          </div>
-          <p className="text-3xl font-extrabold text-teal-400">{alunos.length}</p>
-          <p className="text-[11px] text-slate-400">Perfís acadêmicos ativos</p>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold uppercase">Campanhas Aprovadas</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          </div>
-          <p className="text-3xl font-extrabold text-emerald-400">{aprovadasCount}</p>
-          <p className="text-[11px] text-slate-400">Vagas corporativas no ar</p>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold uppercase">Campanhas Pendentes</span>
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
-          </div>
-          <p className="text-3xl font-extrabold text-amber-400">{pendentesCount}</p>
-          <p className="text-[11px] text-amber-300 font-medium">Aguardando aceite da coordenação</p>
-        </div>
-
+      {/* ── KPIs ── */}
+      <div className="grid sm:grid-cols-3 gap-5">
+        <KpiCard
+          label="Tempo Médio de Match"
+          value="4.2"
+          unit="Dias"
+          sub="18% mais rápido que o trimestre anterior"
+          icon={Clock}
+          accent="#004A30"
+          delay="0.1s"
+        />
+        <KpiCard
+          label="Alunos na Base"
+          value={alunos.length}
+          sub="Perfis com histórico verificado FECAP"
+          icon={Users}
+          accent="#006944"
+          delay="0.2s"
+        />
+        <KpiCard
+          label="Campanhas Ativas"
+          value={vagas.length}
+          sub="Vagas corporativas alimentando o match"
+          icon={CheckCircle2}
+          accent="#008040"
+          delay="0.3s"
+        />
       </div>
 
-      {/* Analytics Section: Soft Skills Distribution across FECAP Students */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
+      {/* ── Analytics ── */}
+      <div className="grid lg:grid-cols-12 gap-6">
+
         {/* Soft Skills Distribution */}
-        <div className="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6">
-          <div>
-            <h2 className="text-base font-bold text-white flex items-center space-x-2">
-              <BrainCircuit className="w-5 h-5 text-cyan-400" />
-              <span>Distribuição de Soft Skills nos Alunos FECAP</span>
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Porcentagem de estudantes com validação em cada competência comportamental.
-            </p>
+        <div className="lg:col-span-7 npa-card rounded-2xl p-6 space-y-5 animate-fade-up delay-200">
+          <div className="flex items-center gap-2">
+            <BrainCircuit className="w-4 h-4 text-npa" />
+            <h2 className="text-sm font-bold text-head">Distribuição de Soft Skills</h2>
           </div>
+          <p className="text-xs text-muted -mt-3">
+            % dos estudantes FECAP com validação em cada competência.
+          </p>
 
           <div className="space-y-4">
-            {softSkillsStats.map((item) => (
-              <div key={item.key} className="space-y-1.5">
+            {softSkillsStats.map((item, i) => (
+              <div key={item.key} className="space-y-1.5 animate-fade-up" style={{ animationDelay: `${0.05 * i}s` }}>
                 <div className="flex justify-between text-xs">
-                  <span className="font-semibold text-slate-200">{item.label}</span>
-                  <span className="font-bold text-cyan-400">
-                    {item.percent}% ({item.count} de {alunos.length} alunos)
+                  <span className="font-semibold text-body">{item.label}</span>
+                  <span className="font-bold text-npa">
+                    {item.percent}% <span className="text-subtle font-normal">({item.count}/{alunos.length})</span>
                   </span>
                 </div>
-                <div className="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800">
-                  <div
-                    className="bg-gradient-to-r from-cyan-500 to-teal-400 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${item.percent}%` }}
-                  />
+                <div className="npa-progress-track">
+                  <div className="npa-progress-bar" style={{ width: `${item.percent}%` }} />
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Quick Campaign Approval Preview */}
-        <div className="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 flex flex-col justify-between">
-          <div className="space-y-4">
-            <h2 className="text-base font-bold text-white flex items-center space-x-2">
-              <ShieldCheck className="w-5 h-5 text-amber-400" />
-              <span>Governança de Campanhas Empresariais</span>
-            </h2>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Todas as vagas submetidas por recrutadores passam pela aprovação da Coordenação Master FECAP antes de ficarem visíveis para os alunos ou entrarem no algoritmo de match.
-            </p>
-
-            <div className="space-y-2 pt-2 text-xs">
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex justify-between items-center">
-                <span>Vagas no ar (Aprovadas)</span>
-                <span className="font-bold text-emerald-400">{aprovadasCount}</span>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex justify-between items-center">
-                <span>Vagas em análise (Pendentes)</span>
-                <span className="font-bold text-amber-400">{pendentesCount}</span>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex justify-between items-center">
-                <span>Vagas devolvidas (Rejeitadas)</span>
-                <span className="font-bold text-rose-400">{rejeitadasCount}</span>
-              </div>
-            </div>
+        {/* Campanhas overview */}
+        <div className="lg:col-span-5 npa-card rounded-2xl p-6 space-y-5 flex flex-col animate-fade-up delay-300">
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-npa" />
+            <h2 className="text-sm font-bold text-head">Monitoramento de Campanhas</h2>
           </div>
 
-          <Link
-            href="/master/campanhas"
-            className="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center justify-center space-x-2 transition-colors"
-          >
-            <span>Ir para Fila de Aprovação de Campanhas</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+          <div className="space-y-2.5 flex-1">
+            {[
+              { label: "Vagas Corporativas Ativas", value: vagas.length, accent: "#004A30" },
+              { label: "Estudantes no Algoritmo", value: alunos.length, accent: "#006944" },
+              { label: "Taxa de Match Estimada", value: `${Math.min(100, Math.round((vagas.length / Math.max(alunos.length, 1)) * 100))}%`, accent: "#008040" },
+            ].map((row) => (
+              <div
+                key={row.label}
+                className="flex justify-between items-center p-3 rounded-xl text-xs border"
+                style={{ background: "var(--bg-raised)", borderColor: "var(--border-light)" }}
+              >
+                <span className="text-body">{row.label}</span>
+                <span className="font-bold text-sm" style={{ color: row.accent }}>{row.value}</span>
+              </div>
+            ))}
+          </div>
 
+          <div className="space-y-2">
+            <Link href="/master/campanhas" className="npa-btn-primary w-full justify-center rounded-xl text-xs">
+              Ver Catálogo de Campanhas
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link href="/master/mentorias" className="npa-btn-ghost w-full justify-center rounded-xl text-xs">
+              <Award className="w-4 h-4" />
+              Validar Mentorias
+            </Link>
+          </div>
+        </div>
       </div>
 
     </main>

@@ -2,133 +2,166 @@
 
 import React from "react";
 import Link from "next/link";
-import { 
-  Briefcase, 
-  PlusCircle, 
-  UserCheck, 
-  ArrowRight, 
-  Sparkles,
-  Search,
-  Building2
+import {
+  Search, PlusCircle, UserCheck, ArrowRight, Building2, ChevronRight, TrendingUp
 } from "lucide-react";
 import { useTalent } from "@/context/TalentContext";
 
+function ActionCard({
+  icon: Icon, title, desc, href, cta, accent = "#004A30", primary = false,
+}: {
+  icon: React.ElementType; title: string; desc: string;
+  href: string; cta: string; accent?: string; primary?: boolean;
+}) {
+  return (
+    <Link href={href} className="group npa-card npa-card-interactive rounded-2xl p-6 flex flex-col gap-5">
+      <div
+        className="w-11 h-11 rounded-xl flex items-center justify-center"
+        style={
+          primary
+            ? { background: accent, boxShadow: `0 4px 14px ${accent}40` }
+            : { background: `${accent}14`, border: `1px solid ${accent}25` }
+        }
+      >
+        <Icon className="w-5 h-5" style={{ color: primary ? "#fff" : accent }} strokeWidth={1.8} />
+      </div>
+      <div className="space-y-1.5 flex-1">
+        <h2 className="font-bold text-head text-sm">{title}</h2>
+        <p className="text-xs text-muted leading-relaxed">{desc}</p>
+      </div>
+      <span className="flex items-center gap-1 text-xs font-bold group-hover:gap-2 transition-all" style={{ color: accent }}>
+        {cta}
+        <ChevronRight className="w-3.5 h-3.5" />
+      </span>
+    </Link>
+  );
+}
+
 export default function EmpresaDashboardPage() {
   const { vagas, alunos } = useTalent();
-
   const vagasAprovadas = vagas.filter((v) => v.status === "aprovada");
 
   return (
     <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
-      
-      {/* Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-teal-950/50 border border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-2xl">
-        <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold uppercase tracking-wider mb-3">
-            <Briefcase className="w-3.5 h-3.5" />
-            <span>Portal Corporativo & Recrutamento</span>
+
+      {/* ── Banner ── */}
+      <div
+        className="rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border animate-fade-up"
+        style={{ background: "var(--bg-surface)", borderColor: "var(--border-light)", boxShadow: "var(--shadow-sm)" }}
+      >
+        <div className="space-y-2">
+          <div className="npa-badge inline-flex">
+            <Building2 className="w-3 h-3" />
+            Portal Corporativo
           </div>
-          <h1 className="text-3xl font-extrabold text-white">Hub da Empresa & Gestão de Talentos</h1>
-          <p className="text-slate-400 text-sm mt-1">
-            Abra campanhas de vaga ou faça prospecção proativa no Banco de Talentos livre da FECAP.
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-head">Gestão de Talentos</h1>
+          <p className="text-sm text-muted max-w-lg">
+            Abra campanhas formais ou use a Busca Ativa para prospectar no banco de talentos verificado da FECAP.
           </p>
         </div>
 
-        <Link
+        <div className="flex items-center gap-3 shrink-0">
+          <div
+            className="rounded-xl p-4 border text-center"
+            style={{ background: "var(--bg-raised)", borderColor: "var(--border-base)" }}
+          >
+            <p className="text-xs text-muted">Talentos</p>
+            <p className="text-2xl font-black text-npa">{alunos.length}</p>
+            <p className="text-[11px] text-subtle">disponíveis</p>
+          </div>
+          <div
+            className="rounded-xl p-4 border text-center"
+            style={{ background: "var(--bg-raised)", borderColor: "var(--border-base)" }}
+          >
+            <p className="text-xs text-muted">Vagas</p>
+            <p className="text-2xl font-black text-npa">{vagas.length}</p>
+            <p className="text-[11px] text-subtle">ativas</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3 módulos ── */}
+      <div className="grid md:grid-cols-3 gap-5 animate-fade-up delay-100">
+        <ActionCard
+          icon={Search}
+          title="Busca Ativa"
+          desc="Explore a base completa de alunos FECAP com filtros livres de soft skills, notas e cursos — sem precisar de vaga aberta."
           href="/empresa/banco-talentos"
-          className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold text-xs flex items-center space-x-2 shadow-lg shadow-teal-500/20 transition-all"
-        >
-          <Search className="w-4 h-4 text-slate-950" />
-          <span>Explorar Busca Ativa ({alunos.length} Talentos)</span>
-        </Link>
+          cta="Explorar talentos"
+          accent="#004A30"
+          primary
+        />
+        <ActionCard
+          icon={PlusCircle}
+          title="Nova Vaga"
+          desc="Cadastre uma posição formal com pesos técnicos (0–5) e requisitos de soft skills. O algoritmo de match ativa automaticamente."
+          href="/empresa/campanhas/nova"
+          cta="Criar vaga"
+          accent="#006944"
+        />
+        <ActionCard
+          icon={UserCheck}
+          title="Ranking por Match"
+          desc="Veja candidatos ordenados pelo algoritmo para suas vagas ativas e acesse feedbacks institucionais dos docentes."
+          href="/empresa/filtragem"
+          cta="Ver ranking"
+          accent="#008040"
+        />
       </div>
 
-      {/* 3 Action Cards for Empresa */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* Card 1: Busca Ativa */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 hover:border-teal-500/40 transition-colors flex flex-col justify-between space-y-4 shadow-xl">
-          <div className="space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
-              <Search className="w-6 h-6 text-teal-400" />
-            </div>
-            <h2 className="text-lg font-bold text-white">1. Busca Ativa (Banco Livre)</h2>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Explore toda a base de alunos da FECAP utilizando filtros livres de Soft Skills, notas técnicas mínimas e cursos, sem necessidade de vaga prévia.
-            </p>
+      {/* ── Campanhas ativas ── */}
+      <div
+        className="npa-card rounded-2xl p-6 space-y-5 animate-fade-up delay-200"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-npa" />
+            <h2 className="font-bold text-head text-sm">Campanhas Ativas</h2>
+            <span className="npa-badge">{vagas.length}</span>
           </div>
-          <Link
-            href="/empresa/banco-talentos"
-            className="w-full py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center justify-center space-x-2 transition-colors"
-          >
-            <span>Acessar Busca Ativa</span>
-            <ArrowRight className="w-4 h-4" />
+          <Link href="/empresa/campanhas/nova" className="npa-btn-neon px-3 py-1.5 text-xs rounded-xl">
+            <PlusCircle className="w-3.5 h-3.5" />
+            Nova
           </Link>
         </div>
 
-        {/* Card 2: Abertura de Vagas */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 hover:border-emerald-500/40 transition-colors flex flex-col justify-between space-y-4 shadow-xl">
-          <div className="space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-              <PlusCircle className="w-6 h-6 text-emerald-400" />
-            </div>
-            <h2 className="text-lg font-bold text-white">2. Abertura de Vagas</h2>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Cadastre posições formais definindo pesos (0-5) em Hard Skills e soft skills obrigatórias. Requer aprovação prévia do Master FECAP.
-            </p>
+        {vagas.length === 0 ? (
+          <div className="text-center py-10 space-y-3">
+            <Building2 className="w-10 h-10 mx-auto text-subtle" strokeWidth={1} />
+            <p className="text-sm text-muted">Nenhuma campanha aberta ainda.</p>
+            <Link href="/empresa/campanhas/nova" className="npa-btn-primary inline-flex rounded-xl text-xs">
+              <PlusCircle className="w-4 h-4" />
+              Criar primeira vaga
+            </Link>
           </div>
-          <Link
-            href="/empresa/campanhas/nova"
-            className="w-full py-3 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-slate-200 font-bold text-xs flex items-center justify-center space-x-2 transition-all"
-          >
-            <span>Criar Nova Vaga</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        {/* Card 3: Ranking por Vaga */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 hover:border-cyan-500/40 transition-colors flex flex-col justify-between space-y-4 shadow-xl">
-          <div className="space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-              <UserCheck className="w-6 h-6 text-cyan-400" />
-            </div>
-            <h2 className="text-lg font-bold text-white">3. Ranking por Match</h2>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Visualize a lista de candidatos ordenados pelo algoritmo em suas vagas aprovadas e acesse os feedbacks oficiais dos docentes.
-            </p>
-          </div>
-          <Link
-            href="/empresa/filtragem"
-            className="w-full py-3 rounded-xl bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-slate-200 font-bold text-xs flex items-center justify-center space-x-2 transition-all"
-          >
-            <span>Ver Ranking de Candidatos</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-      </div>
-
-      {/* Active Campaigns Overview */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
-        <h2 className="text-base font-bold text-white uppercase tracking-wider flex items-center space-x-2">
-          <Building2 className="w-5 h-5 text-teal-400" />
-          <span>Suas Campanhas Ativas ({vagas.length})</span>
-        </h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {vagas.map((vaga) => (
-            <div key={vaga.id} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-              <div className="flex justify-between items-center text-[10px]">
-                <span className="font-bold px-2 py-0.5 rounded bg-slate-900 text-slate-400">{vaga.tipoContrato}</span>
-                <span className={`px-2 py-0.5 rounded-full font-bold uppercase ${vaga.status === 'aprovada' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
-                  {vaga.status}
-                </span>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {vagas.map((vaga) => (
+              <div
+                key={vaga.id}
+                className="p-4 rounded-xl border space-y-2 transition-all hover:border-[#004A30]/25"
+                style={{ background: "var(--bg-raised)", borderColor: "var(--border-light)" }}
+              >
+                <div className="flex justify-between items-start gap-2">
+                  <span
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    style={{ background: "var(--bg-sunken)", color: "var(--text-muted)" }}
+                  >
+                    {vaga.tipoContrato}
+                  </span>
+                  <span
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    style={{ background: "rgba(0,201,81,0.12)", color: "#006944", border: "1px solid rgba(0,201,81,0.25)" }}
+                  >
+                    Ativa
+                  </span>
+                </div>
+                <h3 className="font-bold text-head text-sm line-clamp-1">{vaga.titulo}</h3>
+                <p className="text-xs text-muted">{vaga.empresa}</p>
               </div>
-              <h3 className="font-bold text-white text-sm line-clamp-1">{vaga.titulo}</h3>
-              <p className="text-xs text-slate-400">{vaga.empresa}</p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
     </main>
