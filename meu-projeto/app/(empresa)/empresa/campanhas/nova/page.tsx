@@ -111,7 +111,7 @@ export default function NovaCampanhaVagaPage() {
     });
 
     alert(
-      `Campanha "${titulo}" submetida com sucesso!\n\nStatus: Pendente de Aprovação pela Coordenação Master FECAP.`
+      `Campanha "${titulo}" publicada com sucesso!\n\nStatus: Aprovada e Ativa para o Ranking de Talentos.`
     );
     router.push("/empresa");
   };
@@ -289,13 +289,13 @@ export default function NovaCampanhaVagaPage() {
               materiasRequeridas.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-xl bg-slate-950 border border-slate-800/80 flex items-center justify-between text-xs"
+                  className="p-3 rounded-xl bg-slate-950 border border-slate-800/80 flex items-center justify-between text-xs gap-2"
                 >
-                  <div className="flex items-center space-x-2">
-                    <BookOpen className="w-4 h-4 text-teal-400" />
-                    <span className="font-semibold text-white">{item.nomeDaMateria}</span>
+                  <div className="flex items-center space-x-2 min-w-0 flex-1">
+                    <BookOpen className="w-4 h-4 text-teal-400 shrink-0" />
+                    <span className="font-semibold text-white truncate">{item.nomeDaMateria}</span>
                   </div>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2 shrink-0">
                     <span className="px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 font-mono font-bold border border-teal-500/40">
                       Peso {item.peso}x
                     </span>
@@ -346,18 +346,18 @@ export default function NovaCampanhaVagaPage() {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 flex items-center space-x-3">
-          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
-          <span>Sua campanha será submetida para revisão da Coordenação Master FECAP antes da publicação.</span>
+        <div className="p-4 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-xs text-teal-200 flex items-center space-x-3">
+          <Check className="w-5 h-5 text-teal-400 shrink-0" />
+          <span>Sua vaga é ativada instantaneamente após a publicação e estará disponível para recrutamento.</span>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
           <button
             type="submit"
-            className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold text-sm shadow-lg shadow-teal-500/20 flex items-center space-x-2"
+            className="npa-btn-primary w-full sm:w-auto justify-center py-3.5 rounded-xl text-sm"
           >
-            <PlusCircle className="w-5 h-5 text-slate-950" />
-            <span>Enviar Campanha para Aprovação</span>
+            <PlusCircle className="w-5 h-5" />
+            <span>Publicar Vaga Instantaneamente</span>
           </button>
         </div>
 

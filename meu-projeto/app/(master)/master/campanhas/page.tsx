@@ -1,183 +1,122 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
-import { 
-  ShieldCheck, 
-  CheckCircle2, 
-  XCircle, 
-  ArrowLeft, 
-  Clock, 
-  Briefcase, 
-  Sparkles,
-  AlertTriangle,
-  MessageSquare
-} from "lucide-react";
+import { ArrowLeft, Briefcase, MapPin } from "lucide-react";
 import { useTalent } from "@/context/TalentContext";
-import { SOFT_SKILLS_LABELS, Vaga } from "@/types/talent";
+import { SOFT_SKILLS_LABELS } from "@/types/talent";
 
-export default function AprovaçãoCampanhasPage() {
-  const { vagas, alterarStatusCampanha } = useTalent();
-  const [filterTab, setFilterTab] = useState<"pendente" | "aprovada" | "rejeitada" | "todas">("pendente");
-
-  const filteredVagas = vagas.filter((v) => {
-    if (filterTab === "pendente") return v.status === "pendente_aprovacao";
-    if (filterTab === "aprovada") return v.status === "aprovada";
-    if (filterTab === "rejeitada") return v.status === "rejeitada";
-    return true;
-  });
-
-  const handleAprovar = async (vagaId: string, titulo: string) => {
-    await alterarStatusCampanha(vagaId, "aprovada");
-    alert(`Campanha "${titulo}" aprovada com sucesso pela Coordenação Master!`);
-  };
-
-  const handleRejeitar = async (vagaId: string, titulo: string) => {
-    const feedback = prompt(`Motivo da rejeição para a campanha "${titulo}":`, "Requisitos desalinhados com as diretrizes acadêmicas FECAP.");
-    if (feedback !== null) {
-      await alterarStatusCampanha(vagaId, "rejeitada", feedback);
-      alert(`Campanha "${titulo}" rejeitada.`);
-    }
-  };
+export default function MasterCampanhasPage() {
+  const { vagas } = useTalent();
 
   return (
-    <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
-      
-      <div className="flex items-center space-x-3">
-        <Link href="/master" className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white">
+    <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
+
+      {/* ── Header ── */}
+      <div className="flex items-center gap-3 animate-fade-up">
+        <Link href="/master" className="npa-btn-ghost p-2 rounded-xl shrink-0" aria-label="Voltar">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <div>
-          <h1 className="text-2xl font-extrabold text-white">Aprovação de Campanhas de Vagas</h1>
-          <p className="text-xs text-slate-400">
-            Valide se as vagas criadas por empresas parceiras atendem às diretrizes da FECAP.
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-head leading-tight">
+            Catálogo de Campanhas
+          </h1>
+          <p className="text-xs text-muted">
+            Vagas ativas cadastradas pelas empresas parceiras da FECAP.
           </p>
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex space-x-2 border-b border-slate-800 pb-4 overflow-x-auto text-xs font-semibold">
-        {[
-          { key: "pendente", label: "Pendentes de Aprovação", count: vagas.filter(v => v.status === "pendente_aprovacao").length, color: "text-amber-400" },
-          { key: "aprovada", label: "Campanhas Aprovadas", count: vagas.filter(v => v.status === "aprovada").length, color: "text-emerald-400" },
-          { key: "rejeitada", label: "Campanhas Rejeitadas", count: vagas.filter(v => v.status === "rejeitada").length, color: "text-rose-400" },
-          { key: "todas", label: "Todas", count: vagas.length, color: "text-slate-300" },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setFilterTab(tab.key as "pendente" | "aprovada" | "rejeitada" | "todas")}
-            className={`px-4 py-2 rounded-xl transition-all border flex items-center space-x-2 shrink-0 ${
-              filterTab === tab.key
-                ? "bg-slate-800 text-white border-cyan-500/50 shadow"
-                : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
-            }`}
-          >
-            <span>{tab.label}</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] bg-slate-900 border border-slate-800 font-bold ${tab.color}`}>
-              {tab.count}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* List of Vagas */}
-      {filteredVagas.length === 0 ? (
-        <div className="p-12 text-center bg-slate-900 border border-slate-800 rounded-3xl space-y-3">
-          <ShieldCheck className="w-10 h-10 text-slate-600 mx-auto" />
-          <p className="text-slate-300 font-bold">Nenhuma vaga encontrada na categoria selecionada.</p>
+      {/* ── Lista ── */}
+      {vagas.length === 0 ? (
+        <div className="npa-card rounded-2xl p-8 sm:p-12 text-center space-y-3">
+          <Briefcase className="w-10 h-10 mx-auto" style={{ color: "var(--text-subtle)" }} strokeWidth={1} />
+          <p className="text-sm font-bold text-head">Nenhuma campanha cadastrada.</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredVagas.map((vaga) => (
+          {vagas.map((vaga) => (
             <div
               key={vaga.id}
-              className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 shadow-xl"
+              className="npa-card rounded-2xl p-5 space-y-4"
             >
-              <div className="flex flex-col sm:flex-row justify-between items-start gap-3 border-b border-slate-800 pb-4">
-                <div>
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded bg-slate-800 text-teal-300 border border-slate-700">
+              {/* Cabeçalho da vaga */}
+              <div
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4"
+                style={{ borderBottom: "1px solid var(--border-light)" }}
+              >
+                <div className="min-w-0 flex-1">
+                  {/* Contrato + localização com wrap */}
+                  <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                    <span
+                      className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded"
+                      style={{ background: "var(--bg-sunken)", color: "var(--text-muted)", border: "1px solid var(--border-base)" }}
+                    >
                       {vaga.tipoContrato}
                     </span>
-                    <span className="text-xs text-slate-400">&bull; {vaga.localizacao}</span>
+                    <span className="text-[11px] text-muted flex items-center gap-1">
+                      <MapPin className="w-3 h-3 shrink-0" />
+                      <span className="truncate max-w-[200px]">{vaga.localizacao}</span>
+                    </span>
                   </div>
-                  <h3 className="text-xl font-bold text-white">{vaga.titulo}</h3>
-                  <p className="text-xs font-semibold text-teal-400">{vaga.empresa}</p>
+                  <h3 className="text-base sm:text-lg font-bold text-head leading-snug">{vaga.titulo}</h3>
+                  <p className="text-xs font-semibold text-npa">{vaga.empresa}</p>
                 </div>
 
                 <span
-                  className={`px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wider ${
-                    vaga.status === "aprovada"
-                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                      : vaga.status === "pendente_aprovacao"
-                      ? "bg-amber-500/10 text-amber-400 border-amber-500/30 font-extrabold animate-pulse"
-                      : "bg-rose-500/10 text-rose-400 border-rose-500/30"
-                  }`}
+                  className="self-start sm:self-auto text-xs font-bold px-3 py-1 rounded-full"
+                  style={{ background: "rgba(0,74,48,0.1)", color: "#004A30", border: "1px solid rgba(0,74,48,0.2)" }}
                 >
-                  {vaga.status === "pendente_aprovacao" ? "Pendente Aprovação" : vaga.status}
+                  ✓ Ativa
                 </span>
               </div>
 
-              <p className="text-xs text-slate-300 leading-relaxed">{vaga.descricao}</p>
+              <p className="text-xs text-body leading-relaxed">{vaga.descricao}</p>
 
-              {/* Requirements breakdown */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-2">
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                  <span className="text-amber-400 font-bold block mb-1">Soft Skills Requeridas:</span>
+              {/* Requisitos */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div
+                  className="p-3 rounded-xl space-y-2"
+                  style={{ background: "var(--amber-bg)", border: "1px solid var(--amber-border)" }}
+                >
+                  <span className="font-bold block" style={{ color: "var(--amber-text)" }}>
+                    Soft Skills Exigidas:
+                  </span>
                   <div className="flex flex-wrap gap-1">
                     {vaga.requisitosSoftSkills.map((sk) => (
-                      <span key={sk} className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-300">
-                        {SOFT_SKILLS_LABELS[sk]}
+                      <span
+                        key={sk}
+                        className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                        style={{ background: "rgba(146,64,14,0.08)", color: "var(--amber-text)", border: "1px solid var(--amber-border)" }}
+                      >
+                        {SOFT_SKILLS_LABELS[sk] || sk}
                       </span>
                     ))}
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                  <span className="text-teal-400 font-bold block mb-1">Matérias Requeridas do Histórico:</span>
-                  <div className="flex flex-wrap gap-2 text-[11px] text-slate-300">
+                <div
+                  className="p-3 rounded-xl space-y-2"
+                  style={{ background: "var(--bg-raised)", border: "1px solid var(--border-base)" }}
+                >
+                  <span className="font-bold text-npa block">Matérias Requeridas:</span>
+                  <div className="flex flex-wrap gap-1.5">
                     {vaga.materiasRequeridas?.map((item, idx) => (
-                      <span key={idx} className="bg-slate-900 px-2 py-1 rounded border border-slate-800">
-                        {item.nomeDaMateria}: <strong className="text-teal-400">Peso {item.peso}x</strong>
+                      <span
+                        key={idx}
+                        className="text-[10px] px-2 py-0.5 rounded font-medium"
+                        style={{ background: "var(--bg-sunken)", color: "var(--text-body)", border: "1px solid var(--border-light)" }}
+                      >
+                        {item.nomeDaMateria}: <strong className="text-npa">Peso {item.peso}x</strong>
                       </span>
                     ))}
                   </div>
                 </div>
               </div>
-
-              {vaga.feedbackMaster && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300 flex items-center space-x-2">
-                  <MessageSquare className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span>Feedback da Coordenação: {vaga.feedbackMaster}</span>
-                </div>
-              )}
-
-              {/* Actions for Master */}
-              {vaga.status === "pendente_aprovacao" && (
-                <div className="pt-3 border-t border-slate-800 flex justify-end space-x-3">
-                  <button
-                    onClick={() => handleRejeitar(vaga.id, vaga.titulo)}
-                    className="px-5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold flex items-center space-x-1.5 transition-colors"
-                  >
-                    <XCircle className="w-4 h-4" />
-                    <span>Rejeitar Campanha</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleAprovar(vaga.id, vaga.titulo)}
-                    className="px-6 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold flex items-center space-x-1.5 shadow-lg shadow-emerald-500/20 transition-transform active:scale-95"
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-slate-950" />
-                    <span>Aprovar Campanha</span>
-                  </button>
-                </div>
-              )}
-
             </div>
           ))}
         </div>
       )}
-
     </main>
   );
 }

@@ -2,35 +2,19 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { 
-  Briefcase, 
-  Search, 
-  Award, 
-  ShieldAlert, 
-  ShieldCheck, 
-  CheckCircle2, 
-  XCircle, 
-  X, 
-  UserCheck, 
-  MessageSquare, 
-  SlidersHorizontal,
-  GraduationCap,
-  Mail,
-  ChevronRight,
-  ArrowLeft,
-  FileCheck,
-  Building2,
-  BookOpen
+import {
+  Briefcase, Search, Award, ShieldCheck, CheckCircle2,
+  X, UserCheck, MessageSquare, SlidersHorizontal,
+  ArrowLeft, FileCheck, BookOpen, ChevronRight
 } from "lucide-react";
 import { useTalent } from "@/context/TalentContext";
 import { rankAlunosParaVaga } from "@/lib/match";
-import { MatchResult, SOFT_SKILLS_LABELS, Aluno } from "@/types/talent";
+import { MatchResult, Aluno } from "@/types/talent";
 import { ChatDrawer } from "@/components/ChatDrawer";
 
 export default function FiltragemTalentosEmpresaPage() {
   const { alunos, vagas } = useTalent();
 
-  // Filtrar apenas vagas APROVADAS pela coordenação Master
   const vagasAprovadas = useMemo(() => {
     return vagas.filter((v) => v.status === "aprovada");
   }, [vagas]);
@@ -39,7 +23,6 @@ export default function FiltragemTalentosEmpresaPage() {
   const [selectedMatch, setSelectedMatch] = useState<MatchResult | null>(null);
   const [chatAluno, setChatAluno] = useState<Aluno | null>(null);
 
-  // Filtros
   const [searchQuery, setSearchQuery] = useState("");
   const [cursoFilter, setCursoFilter] = useState("TODOS");
   const [apenasSoftsAtendidas, setApenasSoftsAtendidas] = useState(false);
@@ -51,7 +34,6 @@ export default function FiltragemTalentosEmpresaPage() {
 
   const rankedMatches = useMemo(() => {
     if (!currentVaga) return [];
-
     let results = rankAlunosParaVaga(alunos, currentVaga);
 
     if (searchQuery.trim()) {
@@ -64,120 +46,107 @@ export default function FiltragemTalentosEmpresaPage() {
           m.aluno.curso.toLowerCase().includes(q)
       );
     }
-
-    if (cursoFilter !== "TODOS") {
-      results = results.filter((m) => m.aluno.curso === cursoFilter);
-    }
-
-    if (apenasSoftsAtendidas) {
-      results = results.filter((m) => m.passouSoftSkills);
-    }
-
-    if (minMatchScore > 0) {
-      results = results.filter((m) => m.scoreFinal >= minMatchScore);
-    }
+    if (cursoFilter !== "TODOS") results = results.filter((m) => m.aluno.curso === cursoFilter);
+    if (apenasSoftsAtendidas) results = results.filter((m) => m.passouSoftSkills);
+    if (minMatchScore > 0) results = results.filter((m) => m.scoreFinal >= minMatchScore);
 
     return results;
   }, [alunos, currentVaga, searchQuery, cursoFilter, apenasSoftsAtendidas, minMatchScore]);
 
   const cursosDisponiveis = useMemo(() => {
-    const set = new Set(alunos.map((a) => a.curso));
-    return Array.from(set);
+    const setC = new Set(alunos.map((a) => a.curso));
+    return Array.from(setC);
   }, [alunos]);
 
   return (
-    <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
-      
-      <div className="flex items-center space-x-3">
-        <Link href="/empresa" className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-extrabold text-white">Filtragem de Talentos por Algoritmo de Match</h1>
-          <p className="text-xs text-slate-400">
-            Selecione uma vaga aprovada e analise os estudantes FECAP ranqueados.
-          </p>
+    <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
+
+      {/* ── Header ── */}
+      <div
+        className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 gap-4 animate-fade-up"
+        style={{ borderBottom: "1px solid var(--border-light)" }}
+      >
+        <div className="flex items-center gap-3">
+          <Link href="/empresa" className="npa-btn-ghost p-2 rounded-xl shrink-0" aria-label="Voltar">
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div className="min-w-0">
+            <div className="npa-badge inline-flex mb-1">
+              <UserCheck className="w-3 h-3" />
+              Ranking por Match
+            </div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-head leading-tight">
+              Ranking de Candidatos por Vaga
+            </h1>
+            <p className="text-xs text-muted">
+              Candidatos ordenados por compatibilidade técnica e comportamental.
+            </p>
+          </div>
         </div>
       </div>
 
       {vagasAprovadas.length === 0 ? (
-        <div className="p-12 text-center bg-slate-900 border border-slate-800 rounded-3xl space-y-3">
-          <ShieldAlert className="w-10 h-10 text-amber-400 mx-auto" />
-          <h2 className="text-lg font-bold text-white">Nenhuma Vaga Aprovada no Momento</h2>
-          <p className="text-xs text-slate-400">
-            Suas campanhas precisam ser aprovadas pela Coordenação Master FECAP antes de liberarem o acesso à filtragem de talentos.
+        <div className="npa-card rounded-2xl p-8 text-center space-y-3">
+          <Briefcase className="w-10 h-10 mx-auto" style={{ color: "var(--text-subtle)" }} strokeWidth={1} />
+          <h3 className="text-base font-bold text-head">Nenhuma vaga ativa encontrada</h3>
+          <p className="text-xs text-muted max-w-sm mx-auto">
+            Cadastre uma nova vaga para que o algoritmo ordene os melhores candidatos.
           </p>
-          <Link
-            href="/empresa/campanhas/nova"
-            className="inline-block px-6 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs"
-          >
-            Abrir Nova Campanha
+          <Link href="/empresa/campanhas/nova" className="npa-btn-primary inline-flex text-xs rounded-xl">
+            Criar Nova Vaga
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* Left Column (4 cols): Vaga Selector & Filters */}
-          <div className="lg:col-span-4 space-y-6">
-            
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">
-              <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-2">
-                <Briefcase className="w-4 h-4 text-teal-400" />
-                <span>Vagas Aprovadas ({vagasAprovadas.length})</span>
-              </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-              <div className="space-y-2">
-                {vagasAprovadas.map((v) => {
-                  const isSelected = v.id === currentVaga?.id;
-                  return (
-                    <button
-                      key={v.id}
-                      onClick={() => setSelectedVagaId(v.id)}
-                      className={`w-full text-left p-3.5 rounded-2xl transition-all border ${
-                        isSelected
-                          ? "bg-teal-500/15 border-teal-500/50 text-white shadow-md"
-                          : "bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700"
-                      }`}
-                    >
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-slate-800 text-teal-300">
-                          {v.tipoContrato}
-                        </span>
-                        <span className="text-[10px] text-emerald-400 font-bold">✓ Aprovada</span>
-                      </div>
-                      <p className="font-bold text-xs text-white line-clamp-1">{v.titulo}</p>
-                      <p className="text-[11px] text-slate-400">{v.empresa}</p>
-                    </button>
-                  );
-                })}
-              </div>
+          {/* ── Coluna esquerda: Vaga & Filtros ── */}
+          <div className="lg:col-span-4 space-y-5">
+            {/* Seletor de Vaga */}
+            <div className="npa-card rounded-2xl p-5 space-y-3">
+              <label className="block text-xs font-bold text-npa uppercase tracking-wider">
+                Selecione a Vaga
+              </label>
+              <select
+                value={selectedVagaId}
+                onChange={(e) => setSelectedVagaId(e.target.value)}
+                className="npa-select"
+              >
+                {vagasAprovadas.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.titulo} ({v.tipoContrato})
+                  </option>
+                ))}
+              </select>
+
+              {currentVaga && (
+                <div className="pt-2 text-xs space-y-1.5" style={{ borderTop: "1px solid var(--border-light)" }}>
+                  <p className="font-semibold text-head">{currentVaga.empresa} &bull; {currentVaga.localizacao}</p>
+                  <p className="text-muted line-clamp-2">{currentVaga.descricao}</p>
+                </div>
+              )}
             </div>
 
-            {/* Filter controls */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
-              <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-2">
-                <SlidersHorizontal className="w-4 h-4 text-teal-400" />
-                <span>Filtros do Ranking</span>
+            {/* Filtros */}
+            <div className="npa-card rounded-2xl p-5 space-y-4">
+              <h2 className="text-xs font-bold text-muted uppercase tracking-wider flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-npa" />
+                <span>Refinar Ranking</span>
               </h2>
 
               <div className="relative">
-                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                <Search className="w-4 h-4 absolute left-3 top-2.5" style={{ color: "var(--text-subtle)" }} />
                 <input
                   type="text"
-                  placeholder="Nome, RA ou curso..."
+                  placeholder="Nome, RA, curso..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-teal-500"
+                  className="npa-input pl-9"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1">Filtrar por Curso</label>
-                <select
-                  value={cursoFilter}
-                  onChange={(e) => setCursoFilter(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-teal-500"
-                >
+                <label className="block text-[11px] font-semibold text-muted uppercase mb-1">Curso</label>
+                <select value={cursoFilter} onChange={(e) => setCursoFilter(e.target.value)} className="npa-select">
                   <option value="TODOS">Todos os Cursos</option>
                   {cursosDisponiveis.map((c) => (
                     <option key={c} value={c}>{c}</option>
@@ -185,100 +154,124 @@ export default function FiltragemTalentosEmpresaPage() {
                 </select>
               </div>
 
-              <label className="flex items-center space-x-2.5 text-xs text-slate-300 cursor-pointer">
+              <div className="space-y-2 pt-2" style={{ borderTop: "1px solid var(--border-light)" }}>
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="font-semibold text-muted uppercase">Match Mínimo</span>
+                  <span className="font-mono font-bold text-npa">{minMatchScore}%</span>
+                </div>
+                <input
+                  type="range" min={0} max={100} step={5}
+                  value={minMatchScore}
+                  onChange={(e) => setMinMatchScore(Number(e.target.value))}
+                  className="w-full" style={{ accentColor: "#004A30" }}
+                />
+              </div>
+
+              <label className="flex items-center gap-2 text-xs cursor-pointer pt-1" style={{ color: "var(--amber-text)" }}>
                 <input
                   type="checkbox"
                   checked={apenasSoftsAtendidas}
                   onChange={(e) => setApenasSoftsAtendidas(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-700 accent-teal-500 bg-slate-950"
+                  className="rounded"
                 />
-                <span>Apenas 100% de Soft Skills atendidas</span>
+                <span>Apenas Soft Skills 100% Atendidas</span>
               </label>
-            </div>
 
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setCursoFilter("TODOS");
+                  setApenasSoftsAtendidas(false);
+                  setMinMatchScore(0);
+                }}
+                className="npa-btn-ghost w-full justify-center text-xs rounded-xl"
+              >
+                Limpar Filtros
+              </button>
+            </div>
           </div>
 
-          {/* Right Column (8 cols): Candidates Ranking */}
+          {/* ── Coluna direita: Lista do Ranking ── */}
           <div className="lg:col-span-8 space-y-4">
-            
-            <div className="flex items-center justify-between px-1">
-              <h2 className="text-lg font-bold text-white flex items-center space-x-2">
-                <Award className="w-5 h-5 text-teal-400" />
-                <span>Ranking de Candidatos ({rankedMatches.length})</span>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-head flex items-center gap-2">
+                <Award className="w-4 h-4 text-npa" />
+                <span>Candidatos Ordenados ({rankedMatches.length})</span>
               </h2>
-              <span className="text-xs text-slate-400 font-mono">
-                {currentVaga?.titulo}
-              </span>
             </div>
 
             {rankedMatches.length === 0 ? (
-              <div className="p-12 text-center bg-slate-900 border border-slate-800 rounded-3xl space-y-2">
-                <ShieldAlert className="w-8 h-8 text-slate-600 mx-auto" />
-                <p className="text-slate-300 text-sm font-semibold">Nenhum aluno atende aos filtros atuais.</p>
+              <div className="p-10 text-center npa-card rounded-2xl space-y-2">
+                <UserCheck className="w-10 h-10 mx-auto text-subtle" strokeWidth={1} />
+                <p className="font-bold text-xs text-head">Nenhum candidato atende aos filtros</p>
+                <p className="text-xs text-muted">Tente reduzir o Match mínimo.</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {rankedMatches.map((match, rankIndex) => {
-                  const { aluno, scoreFinal, passouSoftSkills, softSkillsFaltantes } = match;
-
-                  let scoreBg = "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
-                  if (scoreFinal < 50 || !passouSoftSkills) {
-                    scoreBg = "bg-rose-500/10 text-rose-400 border-rose-500/30";
-                  } else if (scoreFinal < 75) {
-                    scoreBg = "bg-amber-500/10 text-amber-400 border-amber-500/30";
-                  }
+                {rankedMatches.map((match, index) => {
+                  const { aluno, scoreFinal, softSkillsFaltantes } = match;
+                  const scoreBg =
+                    scoreFinal >= 80 ? "rgba(0,74,48,0.1)" :
+                    scoreFinal >= 60 ? "rgba(0,105,68,0.1)" :
+                    "var(--amber-bg)";
+                  const scoreColor =
+                    scoreFinal >= 80 ? "#004A30" :
+                    scoreFinal >= 60 ? "#006944" :
+                    "var(--amber-text)";
 
                   return (
                     <div
                       key={aluno.id}
                       onClick={() => setSelectedMatch(match)}
-                      className="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-teal-500/40 transition-all cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group"
+                      className="npa-card npa-card-interactive rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer"
                     >
-                      <div className="flex items-center space-x-4">
-                        <div className="w-7 h-7 rounded-full bg-slate-950 flex items-center justify-center font-bold text-xs text-slate-400 border border-slate-800 shrink-0">
-                          #{rankIndex + 1}
+                      <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                        <div
+                          className="w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center shrink-0"
+                          style={{ background: "var(--bg-raised)", color: "var(--text-head)", border: "1px solid var(--border-base)" }}
+                        >
+                          #{index + 1}
                         </div>
 
                         <img
                           src={aluno.avatarUrl}
                           alt={aluno.nome}
-                          className="w-12 h-12 rounded-full object-cover border-2 border-slate-700"
+                          className="w-11 h-11 rounded-xl object-cover shrink-0 border-2"
+                          style={{ borderColor: "var(--border-strong)" }}
                         />
 
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <h3 className="font-bold text-white text-sm group-hover:text-teal-400 transition-colors">
-                              {aluno.nome}
-                            </h3>
-                            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800">
-                              RA: {aluno.ra}
-                            </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-bold text-head text-sm truncate">{aluno.nome}</h3>
+                            <span className="npa-badge text-[10px]">RA: {aluno.ra}</span>
                           </div>
-                          <p className="text-xs text-slate-400">
-                            {aluno.curso} ({aluno.idade} anos) &bull; {aluno.semestre}º Semestre
+                          <p className="text-xs text-muted truncate">
+                            {aluno.curso} &bull; {aluno.semestre}º Semestre
                           </p>
-
-                          {!passouSoftSkills && softSkillsFaltantes.length > 0 && (
-                            <p className="text-[11px] text-rose-400 font-medium mt-0.5">
-                              ⚠ Falta: {softSkillsFaltantes.map(s => SOFT_SKILLS_LABELS[s]).join(", ")}
+                          {softSkillsFaltantes && softSkillsFaltantes.length > 0 && (
+                            <p className="text-[11px] font-medium mt-0.5" style={{ color: "var(--red-text)" }}>
+                              ⚠ Falta: {softSkillsFaltantes.join(", ")}
                             </p>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto space-x-3 border-t sm:border-t-0 border-slate-800/80 pt-2 sm:pt-0">
-                        <div className={`px-3 py-1 rounded-xl text-xs font-extrabold border ${scoreBg}`}>
+                      <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2 pt-2 sm:pt-0" style={{ borderTop: "1px solid var(--border-light)" }}>
+                        <div
+                          className="px-3 py-1 rounded-xl text-xs font-black border"
+                          style={{ background: scoreBg, color: scoreColor, borderColor: "var(--border-light)" }}
+                        >
                           {scoreFinal}% Match
                         </div>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setChatAluno(aluno);
+                            setChatAluno({ ...aluno, userId: aluno.userId || aluno.id });
                           }}
-                          className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-bold text-xs flex items-center space-x-1 transition-all shadow-md shadow-cyan-500/10"
+                          className="npa-btn-primary px-3 py-1.5 rounded-xl text-xs"
                         >
-                          <MessageSquare className="w-3.5 h-3.5 text-slate-950" />
-                          <span>Enviar Mensagem</span>
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          <span>Mensagem</span>
                         </button>
                       </div>
                     </div>
@@ -286,142 +279,138 @@ export default function FiltragemTalentosEmpresaPage() {
                 })}
               </div>
             )}
-
           </div>
-
         </div>
       )}
 
-      {/* STUDENT DETAILS MODAL */}
+      {/* ── Modal de Detalhes ── */}
       {selectedMatch && currentVaga && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6 relative text-white shadow-2xl">
-            
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div
+            className="rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6 relative border"
+            style={{ background: "var(--bg-surface)", borderColor: "var(--border-base)", boxShadow: "var(--shadow-lg)" }}
+          >
             <button
               onClick={() => setSelectedMatch(null)}
-              className="absolute top-5 right-5 p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white"
+              className="absolute top-5 right-5 npa-btn-ghost w-8 h-8 p-0 justify-center rounded-full"
+              aria-label="Fechar"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
-            <div className="flex items-center space-x-4 border-b border-slate-800 pb-4">
+            {/* Header Modal */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pb-4" style={{ borderBottom: "1px solid var(--border-light)" }}>
               <img
                 src={selectedMatch.aluno.avatarUrl}
                 alt={selectedMatch.aluno.nome}
-                className="w-16 h-16 rounded-full border-2 border-teal-500 object-cover"
+                className="w-14 h-14 rounded-2xl object-cover shrink-0 border-2"
+                style={{ borderColor: "var(--border-strong)" }}
               />
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h2 className="text-xl font-extrabold text-white">{selectedMatch.aluno.nome}</h2>
-                  <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                    RA: {selectedMatch.aluno.ra}
-                  </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-lg font-extrabold text-head">{selectedMatch.aluno.nome}</h2>
+                  <span className="npa-badge text-[10px]">RA: {selectedMatch.aluno.ra}</span>
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-muted mt-0.5">
                   {selectedMatch.aluno.curso} &bull; {selectedMatch.aluno.idade} anos &bull; {selectedMatch.aluno.email}
                 </p>
               </div>
             </div>
 
-            {/* Histórico Acadêmico Validado */}
+            {/* Histórico */}
             <div className="space-y-3">
-              <h3 className="text-xs font-bold text-teal-400 uppercase tracking-wider flex items-center space-x-2">
-                <BookOpen className="w-4 h-4 text-teal-400" />
-                <span>Boletim do Histórico Escolar (Notas Validadas FECAP)</span>
+              <h3 className="text-xs font-bold text-npa uppercase tracking-wider flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-npa" />
+                <span>Boletim do Histórico Escolar (FECAP)</span>
               </h3>
-              <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-900 text-slate-400 font-semibold uppercase text-[10px] border-b border-slate-800">
-                    <tr>
-                      <th className="p-3">Matéria / Disciplina</th>
-                      <th className="p-3">Semestre</th>
-                      <th className="p-3 text-center">Nota (0 a 10)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                    {selectedMatch.aluno.historicoAcademico?.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-slate-900/50">
-                        <td className="p-3 font-semibold text-white">{item.materia}</td>
-                        <td className="p-3 font-mono text-slate-400">{item.semestre}</td>
-                        <td className="p-3 text-center">
-                          <span className={`inline-block font-mono font-bold px-2 py-0.5 rounded ${
-                            item.nota >= 8.5
-                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                              : item.nota >= 7.0
-                              ? "bg-blue-500/20 text-blue-300 border border-blue-500/40"
-                              : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                          }`}>
-                            {item.nota.toFixed(1)}
-                          </span>
-                        </td>
+              <div className="rounded-xl border overflow-x-auto" style={{ background: "var(--bg-raised)", borderColor: "var(--border-light)" }}>
+                {!selectedMatch.aluno.historicoAcademico || selectedMatch.aluno.historicoAcademico.length === 0 ? (
+                  <p className="text-xs text-muted italic p-4 text-center">Histórico não importado.</p>
+                ) : (
+                  <table className="w-full text-left text-xs min-w-[400px] npa-table">
+                    <thead>
+                      <tr>
+                        <th>Matéria</th>
+                        <th>Semestre</th>
+                        <th className="text-center">Nota</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y" style={{ borderColor: "var(--border-light)" }}>
+                      {selectedMatch.aluno.historicoAcademico.map((item, idx) => (
+                        <tr key={idx}>
+                          <td className="p-3 font-semibold text-head">{item.materia}</td>
+                          <td className="p-3 font-mono text-muted">{item.semestre}</td>
+                          <td className="p-3 text-center">
+                            <span className="font-mono font-bold text-npa">{item.nota.toFixed(1)}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
 
-            {/* Teacher Feedback */}
+            {/* Soft Skills */}
             <div className="space-y-3">
-              <h3 className="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center space-x-2">
-                <MessageSquare className="w-4 h-4 text-cyan-400" />
-                <span>Feedbacks dos Professores FECAP</span>
+              <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: "var(--amber-text)" }}>
+                <ShieldCheck className="w-4 h-4" />
+                <span>Competências Comportamentais</span>
               </h3>
-              <div className="space-y-2">
-                {selectedMatch.aluno.feedbacksProfessores.map((fb, idx) => (
-                  <div key={idx} className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs italic text-slate-300">
-                    &quot;{fb}&quot;
-                  </div>
-                ))}
+              <div className="flex flex-wrap gap-2">
+                {selectedMatch.aluno.progressosTrilha?.map((progresso) => {
+                  const isValidated = progresso.status === "VALIDADO_MENTORIA";
+                  const nomeTrilha = (progresso as any).trilha?.nome || progresso.trilhaNome || "Soft Skill";
+                  return (
+                    <span key={progresso.id || progresso.trilhaNome} className="npa-badge text-[10px]">
+                      {nomeTrilha} ({isValidated ? "Validado" : "Aprovado"})
+                    </span>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Document Pack */}
+            {/* Documentos */}
             <div className="space-y-3">
-              <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-2">
-                <FileCheck className="w-4 h-4 text-emerald-400" />
-                <span>Pack de Documentos Acadêmicos ({selectedMatch.aluno.packDocumentos?.length || 0})</span>
+              <h3 className="text-xs font-bold text-npa uppercase tracking-wider flex items-center gap-2">
+                <FileCheck className="w-4 h-4 text-npa" />
+                <span>Pack de Documentos ({selectedMatch.aluno.packDocumentos?.length || 0})</span>
               </h3>
               <div className="flex flex-wrap gap-2 text-xs">
                 {selectedMatch.aluno.packDocumentos?.map((doc) => (
-                  <span key={doc.id} className="px-3 py-1 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 flex items-center space-x-1">
-                    <FileCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{doc.nome}</span>
+                  <span key={doc.id} className="npa-badge text-[10px]">
+                    <FileCheck className="w-3 h-3" />
+                    {doc.nome}
                   </span>
                 ))}
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-800 flex justify-between items-center">
-              <button
-                onClick={() => setSelectedMatch(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 text-xs font-semibold text-slate-300"
-              >
+            {/* Footer Modal */}
+            <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between items-stretch sm:items-center gap-2" style={{ borderTop: "1px solid var(--border-light)" }}>
+              <button onClick={() => setSelectedMatch(null)} className="npa-btn-ghost justify-center text-xs py-2.5 rounded-xl">
                 Fechar
               </button>
               <button
                 onClick={() => {
-                  const target = selectedMatch.aluno;
-                  setSelectedMatch(null);
-                  setChatAluno(target);
+                  if (selectedMatch?.aluno) {
+                    const target = { ...selectedMatch.aluno, userId: selectedMatch.aluno.userId || selectedMatch.aluno.id };
+                    setSelectedMatch(null);
+                    setChatAluno(target);
+                  }
                 }}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 text-xs font-extrabold flex items-center space-x-2 shadow-lg shadow-cyan-500/20"
+                className="npa-btn-primary justify-center text-xs py-2.5 rounded-xl"
               >
-                <MessageSquare className="w-4 h-4 text-slate-950" />
+                <MessageSquare className="w-4 h-4" />
                 <span>Enviar Mensagem ao Candidato</span>
               </button>
             </div>
-
           </div>
         </div>
       )}
 
       {/* CHAT DRAWER LATERAL */}
-      <ChatDrawer
-        aluno={chatAluno}
-        onClose={() => setChatAluno(null)}
-      />
-
+      <ChatDrawer aluno={chatAluno} onClose={() => setChatAluno(null)} />
     </main>
   );
 }
